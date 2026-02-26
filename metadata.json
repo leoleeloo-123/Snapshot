@@ -1,0 +1,5 @@
+{
+  "name": "Asset Snapshot",
+  "description": "A comprehensive asset tracking system with owner-based accounts, historical balance logging, and Excel data management.",
+  "requestFramePermissions": []
+}
