@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { Theme, Language, Owner, FXRate } from '../types';
+import { Theme, Language, Owner, FXRate, Bank, Account, BalanceLog } from '../types';
 
 interface AppContextType {
   theme: Theme;
@@ -7,15 +7,32 @@ interface AppContextType {
   language: Language;
   setLanguage: (lang: Language) => void;
   owners: Owner[];
-  refreshOwners: () => Promise<void>;
+  addOwner: (name: string) => void;
+  deleteOwner: (id: number) => void;
+  banks: Bank[];
+  getBank: (id: number) => Bank | undefined;
+  addBank: (bank: Omit<Bank, 'id' | 'accounts' | 'total_balance'>) => number;
+  updateBank: (id: number, bank: Partial<Bank>) => void;
+  deleteBank: (id: number) => void;
+  addSubAccount: (bankId: number, account: Omit<Account, 'id' | 'bank_id' | 'logs'>) => number;
+  updateSubAccount: (id: number, account: Partial<Account>) => void;
+  deleteSubAccount: (id: number) => void;
+  addLog: (log: Omit<BalanceLog, 'id'>) => void;
+  updateLog: (id: number, log: Partial<BalanceLog>) => void;
+  deleteLog: (id: number) => void;
   countries: string[];
+  addCountry: (name: string) => void;
+  deleteCountry: (name: string) => void;
   currencies: string[];
-  refreshConfig: () => Promise<void>;
+  addCurrency: (name: string) => void;
+  deleteCurrency: (name: string) => void;
   fxRates: FXRate[];
-  refreshFXRates: () => Promise<void>;
+  updateFXRates: (rates: FXRate[]) => void;
   displayCurrency: string;
   setDisplayCurrency: (curr: string) => void;
   t: (key: string) => string;
+  resetAllData: () => void;
+  importAllData: (data: any) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -166,55 +183,210 @@ const translations = {
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [theme, setTheme] = useState<Theme>(() => (localStorage.getItem('theme') as Theme) || 'light');
   const [language, setLanguage] = useState<Language>(() => (localStorage.getItem('language') as Language) || 'en');
-  const [owners, setOwners] = useState<Owner[]>([]);
-  const [countries, setCountries] = useState<string[]>([]);
-  const [currencies, setCurrencies] = useState<string[]>([]);
-  const [fxRates, setFXRates] = useState<FXRate[]>([]);
   const [displayCurrency, setDisplayCurrency] = useState<string>(() => localStorage.getItem('displayCurrency') || 'USD');
 
+  // Data States
+  const [owners, setOwners] = useState<Owner[]>(() => JSON.parse(localStorage.getItem('owners') || '[]'));
+  const [banks, setBanks] = useState<Bank[]>(() => JSON.parse(localStorage.getItem('banks') || '[]'));
+  const [accounts, setAccounts] = useState<Account[]>(() => JSON.parse(localStorage.getItem('accounts') || '[]'));
+  const [logs, setLogs] = useState<BalanceLog[]>(() => JSON.parse(localStorage.getItem('logs') || '[]'));
+  const [countries, setCountries] = useState<string[]>(() => JSON.parse(localStorage.getItem('countries') || '[]'));
+  const [currencies, setCurrencies] = useState<string[]>(() => JSON.parse(localStorage.getItem('currencies') || '[]'));
+  const [fxRates, setFXRates] = useState<FXRate[]>(() => JSON.parse(localStorage.getItem('fxRates') || '[]'));
+
+  // Persistence
+  useEffect(() => { localStorage.setItem('theme', theme); document.documentElement.className = theme; }, [theme]);
+  useEffect(() => { localStorage.setItem('language', language); }, [language]);
+  useEffect(() => { localStorage.setItem('displayCurrency', displayCurrency); }, [displayCurrency]);
+  useEffect(() => { localStorage.setItem('owners', JSON.stringify(owners)); }, [owners]);
+  useEffect(() => { localStorage.setItem('banks', JSON.stringify(banks)); }, [banks]);
+  useEffect(() => { localStorage.setItem('accounts', JSON.stringify(accounts)); }, [accounts]);
+  useEffect(() => { localStorage.setItem('logs', JSON.stringify(logs)); }, [logs]);
+  useEffect(() => { localStorage.setItem('countries', JSON.stringify(countries)); }, [countries]);
+  useEffect(() => { localStorage.setItem('currencies', JSON.stringify(currencies)); }, [currencies]);
+  useEffect(() => { localStorage.setItem('fxRates', JSON.stringify(fxRates)); }, [fxRates]);
+
+  // Initial Seeding
   useEffect(() => {
-    localStorage.setItem('theme', theme);
-    document.documentElement.classList.remove('light', 'dark', 'dark-green');
-    document.documentElement.classList.add(theme);
-    if (theme === 'dark' || theme === 'dark-green') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
+    if (owners.length === 0) {
+      const defaultOwner = { id: Date.now(), name: 'Me' };
+      setOwners([defaultOwner]);
+      
+      if (countries.length === 0) setCountries(['USA', 'China', 'Hong Kong']);
+      if (currencies.length === 0) setCurrencies(['USD', 'CNY', 'HKD']);
+
+      // Seed Demo Data
+      const chaseBank: Bank = {
+        id: Date.now() + 1,
+        owner_id: defaultOwner.id,
+        name: 'Chase Main',
+        bank_name: 'Chase Bank',
+        logo_color: '#117aca',
+        country: 'USA',
+        last_updated: new Date().toISOString()
+      };
+      
+      const hsbcBank: Bank = {
+        id: Date.now() + 2,
+        owner_id: defaultOwner.id,
+        name: 'HSBC HK',
+        bank_name: 'HSBC',
+        logo_color: '#db0011',
+        country: 'Hong Kong',
+        last_updated: new Date().toISOString()
+      };
+
+      const chaseAcc1: Account = { id: Date.now() + 3, bank_id: chaseBank.id, name: 'Checking', type: 'Bank', account_number: '**** 1234' };
+      const chaseAcc2: Account = { id: Date.now() + 4, bank_id: chaseBank.id, name: 'Savings', type: 'Bank', account_number: '**** 5678' };
+      const hsbcAcc1: Account = { id: Date.now() + 5, bank_id: hsbcBank.id, name: 'HKD Savings', type: 'Bank', account_number: '**** 9999' };
+
+      const now = new Date();
+      const oneMonthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
+      const twoMonthsAgo = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000).toISOString();
+
+      const demoLogs: BalanceLog[] = [
+        { id: Date.now() + 6, account_id: chaseAcc1.id, balance: 5000, currency: 'USD', comment: 'Initial deposit', recorded_at: twoMonthsAgo },
+        { id: Date.now() + 7, account_id: chaseAcc1.id, balance: 7500, currency: 'USD', comment: 'Salary', recorded_at: oneMonthAgo },
+        { id: Date.now() + 8, account_id: chaseAcc1.id, balance: 8200, currency: 'USD', comment: 'Current balance', recorded_at: now.toISOString() },
+        { id: Date.now() + 9, account_id: chaseAcc2.id, balance: 10000, currency: 'USD', comment: 'Initial savings', recorded_at: oneMonthAgo },
+        { id: Date.now() + 10, account_id: chaseAcc2.id, balance: 10050, currency: 'USD', comment: 'Interest', recorded_at: now.toISOString() },
+        { id: Date.now() + 11, account_id: hsbcAcc1.id, balance: 50000, currency: 'HKD', comment: 'Savings', recorded_at: now.toISOString() }
+      ];
+
+      setBanks([chaseBank, hsbcBank]);
+      setAccounts([chaseAcc1, chaseAcc2, hsbcAcc1]);
+      setLogs(demoLogs);
     }
-  }, [theme]);
-
-  useEffect(() => {
-    localStorage.setItem('language', language);
-  }, [language]);
-
-  useEffect(() => {
-    localStorage.setItem('displayCurrency', displayCurrency);
-  }, [displayCurrency]);
-
-  const refreshOwners = async () => {
-    const res = await fetch('/api/owners');
-    const data = await res.json();
-    setOwners(data);
-  };
-
-  const refreshConfig = async () => {
-    const res = await fetch('/api/config');
-    const data = await res.json();
-    setCountries(data.countries);
-    setCurrencies(data.currencies);
-  };
-
-  const refreshFXRates = async () => {
-    const res = await fetch('/api/fx-rates');
-    const data = await res.json();
-    setFXRates(data);
-  };
-
-  useEffect(() => {
-    refreshOwners();
-    refreshConfig();
-    refreshFXRates();
   }, []);
+
+  // CRUD Methods
+  const addOwner = (name: string) => setOwners(prev => [...prev, { id: Date.now(), name }]);
+  const deleteOwner = (id: number) => setOwners(prev => prev.filter(o => o.id !== id));
+
+  const addBank = (bank: Omit<Bank, 'id' | 'accounts' | 'total_balance'>) => {
+    const id = Date.now();
+    setBanks(prev => [...prev, { ...bank, id, last_updated: new Date().toISOString() }]);
+    // Add default account
+    addSubAccount(id, { name: 'Default Account', type: 'Bank' });
+    return id;
+  };
+
+  const updateBank = (id: number, bank: Partial<Bank>) => {
+    setBanks(prev => prev.map(b => b.id === id ? { ...b, ...bank, last_updated: new Date().toISOString() } : b));
+  };
+
+  const deleteBank = (id: number) => {
+    setBanks(prev => prev.filter(b => b.id !== id));
+    setAccounts(prev => prev.filter(a => a.bank_id !== id));
+    // Logs are filtered by account_id which is already gone
+  };
+
+  const addSubAccount = (bankId: number, account: Omit<Account, 'id' | 'bank_id' | 'logs'>) => {
+    const id = Date.now() + Math.random();
+    setAccounts(prev => [...prev, { ...account, id, bank_id: bankId }]);
+    return id;
+  };
+
+  const updateSubAccount = (id: number, account: Partial<Account>) => {
+    setAccounts(prev => prev.map(a => a.id === id ? { ...a, ...account } : a));
+  };
+
+  const deleteSubAccount = (id: number) => {
+    setAccounts(prev => prev.filter(a => a.id !== id));
+    setLogs(prev => prev.filter(l => l.account_id !== id));
+  };
+
+  const addLog = (log: Omit<BalanceLog, 'id'>) => {
+    setLogs(prev => [...prev, { ...log, id: Date.now() }]);
+    // Update bank timestamp
+    const account = accounts.find(a => a.id === log.account_id);
+    if (account) updateBank(account.bank_id, {});
+  };
+
+  const updateLog = (id: number, log: Partial<BalanceLog>) => {
+    setLogs(prev => prev.map(l => l.id === id ? { ...l, ...log } : l));
+    const existing = logs.find(l => l.id === id);
+    if (existing) {
+      const account = accounts.find(a => a.id === existing.account_id);
+      if (account) updateBank(account.bank_id, {});
+    }
+  };
+
+  const deleteLog = (id: number) => {
+    const existing = logs.find(l => l.id === id);
+    setLogs(prev => prev.filter(l => l.id !== id));
+    if (existing) {
+      const account = accounts.find(a => a.id === existing.account_id);
+      if (account) updateBank(account.bank_id, {});
+    }
+  };
+
+  const addCountry = (name: string) => setCountries(prev => Array.from(new Set([...prev, name])));
+  const deleteCountry = (name: string) => setCountries(prev => prev.filter(c => c !== name));
+  const addCurrency = (name: string) => setCurrencies(prev => Array.from(new Set([...prev, name])));
+  const deleteCurrency = (name: string) => setCurrencies(prev => prev.filter(c => c !== name));
+
+  const updateFXRates = (rates: FXRate[]) => setFXRates(rates);
+
+  const resetAllData = () => {
+    localStorage.clear();
+    window.location.reload();
+  };
+
+  const importAllData = (data: any) => {
+    if (data.owners) setOwners(data.owners);
+    if (data.banks) setBanks(data.banks);
+    if (data.accounts) setAccounts(data.accounts);
+    if (data.logs) setLogs(data.logs);
+    if (data.countries) setCountries(data.countries);
+    if (data.currencies) setCurrencies(data.currencies);
+    if (data.fxRates) setFXRates(data.fxRates);
+    setTimeout(() => window.location.reload(), 500);
+  };
+
+  const getBank = (id: number) => {
+    const bank = banks.find(b => b.id === id);
+    if (!bank) return undefined;
+    
+    const owner = owners.find(o => o.id === bank.owner_id);
+    const bankAccounts = accounts.filter(a => a.bank_id === id).map(acc => ({
+      ...acc,
+      logs: logs.filter(l => l.account_id === acc.id).sort((a, b) => new Date(b.recorded_at).getTime() - new Date(a.recorded_at).getTime())
+    }));
+
+    // Calculate total balance
+    let total_balance = 0;
+    bankAccounts.forEach(acc => {
+      if (acc.logs && acc.logs.length > 0) {
+        total_balance += acc.logs[0].balance;
+      }
+    });
+
+    return {
+      ...bank,
+      owner_name: owner?.name,
+      accounts: bankAccounts,
+      total_balance
+    };
+  };
+
+  // Aggregated Banks for List
+  const aggregatedBanks = banks.map(b => {
+    const owner = owners.find(o => o.id === b.owner_id);
+    const bankAccounts = accounts.filter(a => a.bank_id === b.id);
+    let total_balance = 0;
+    bankAccounts.forEach(acc => {
+      const accountLogs = logs.filter(l => l.account_id === acc.id).sort((a, b) => new Date(b.recorded_at).getTime() - new Date(a.recorded_at).getTime());
+      if (accountLogs.length > 0) {
+        total_balance += accountLogs[0].balance;
+      }
+    });
+    return {
+      ...b,
+      owner_name: owner?.name,
+      total_balance
+    };
+  });
 
   const t = (key: string) => {
     return translations[language][key as keyof typeof translations['en']] || key;
@@ -224,11 +396,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     <AppContext.Provider value={{ 
       theme, setTheme, 
       language, setLanguage, 
-      owners, refreshOwners,
-      countries, currencies, refreshConfig,
-      fxRates, refreshFXRates,
+      owners, addOwner, deleteOwner,
+      banks: aggregatedBanks, getBank, addBank, updateBank, deleteBank,
+      addSubAccount, updateSubAccount, deleteSubAccount,
+      addLog, updateLog, deleteLog,
+      countries, addCountry, deleteCountry,
+      currencies, addCurrency, deleteCurrency,
+      fxRates, updateFXRates,
       displayCurrency, setDisplayCurrency,
-      t 
+      t, resetAllData, importAllData
     }}>
       {children}
     </AppContext.Provider>

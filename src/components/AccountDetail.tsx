@@ -19,8 +19,13 @@ interface AccountDetailProps {
 }
 
 const AccountDetail: React.FC<AccountDetailProps> = ({ accountId: bankId, onBack }) => {
-  const { t, owners, countries, currencies, language } = useAppContext();
-  const [loading, setLoading] = useState(!!bankId);
+  const { 
+    t, owners, countries, currencies, language,
+    getBank, addBank, updateBank, deleteBank,
+    addSubAccount, updateSubAccount, deleteSubAccount,
+    addLog, updateLog, deleteLog
+  } = useAppContext();
+  
   const [bank, setBank] = useState<Partial<Bank>>({
     name: '',
     owner_id: owners[0]?.id || 0,
@@ -43,99 +48,82 @@ const AccountDetail: React.FC<AccountDetailProps> = ({ accountId: bankId, onBack
 
   const [showLogForm, setShowLogForm] = useState(false);
 
-  const fetchBankData = async () => {
-    if (bankId) {
-      const res = await fetch(`/api/accounts/${bankId}`);
-      const data = await res.json();
-      setBank(data);
-      if (data.accounts && data.accounts.length > 0 && selectedAccountId === null) {
-        setSelectedAccountId(data.accounts[0].id);
-      }
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
-    fetchBankData();
-  }, [bankId]);
-
-  const handleSaveBank = async () => {
-    const method = bankId ? 'PUT' : 'POST';
-    const url = bankId ? `/api/accounts/${bankId}` : '/api/accounts';
-    
-    const res = await fetch(url, {
-      method,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(bank)
-    });
-    
-    if (res.ok) {
-      onBack();
+    if (bankId) {
+      const data = getBank(bankId);
+      if (data) {
+        setBank(data);
+        if (data.accounts && data.accounts.length > 0 && selectedAccountId === null) {
+          setSelectedAccountId(data.accounts[0].id);
+        }
+      }
     }
+  }, [bankId, getBank]);
+
+  const handleSaveBank = () => {
+    if (bankId) {
+      updateBank(bankId, bank);
+    } else {
+      addBank(bank as any);
+    }
+    onBack();
   };
 
-  const handleDeleteBank = async () => {
-    if (!confirm(t('confirmDelete'))) return;
-    const res = await fetch(`/api/accounts/${bankId}`, { method: 'DELETE' });
-    if (res.ok) onBack();
+  const handleDeleteBank = () => {
+    if (!confirm(t('confirmDelete')) || !bankId) return;
+    deleteBank(bankId);
+    onBack();
   };
 
-  const handleSaveSubAccount = async () => {
+  const handleSaveSubAccount = () => {
     if (!editingAccount || !bankId) return;
     
-    const method = editingAccount.id ? 'PUT' : 'POST';
-    const url = editingAccount.id ? `/api/sub-accounts/${editingAccount.id}` : '/api/sub-accounts';
-    
-    const res = await fetch(url, {
-      method,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...editingAccount, bank_id: bankId })
-    });
-    
-    if (res.ok) {
-      setEditingAccount(null);
-      fetchBankData();
+    if (editingAccount.id) {
+      updateSubAccount(editingAccount.id, editingAccount);
+    } else {
+      addSubAccount(bankId, editingAccount as any);
     }
+    setEditingAccount(null);
+    const updated = getBank(bankId);
+    if (updated) setBank(updated);
   };
 
-  const handleDeleteSubAccount = async (id: number) => {
-    if (!confirm(t('confirmDelete'))) return;
-    const res = await fetch(`/api/sub-accounts/${id}`, { method: 'DELETE' });
-    if (res.ok) {
-      if (selectedAccountId === id) setSelectedAccountId(null);
-      fetchBankData();
-    }
+  const handleDeleteSubAccount = (id: number) => {
+    if (!confirm(t('confirmDelete')) || !bankId) return;
+    deleteSubAccount(id);
+    if (selectedAccountId === id) setSelectedAccountId(null);
+    const updated = getBank(bankId);
+    if (updated) setBank(updated);
   };
 
-  const handleAddLog = async () => {
-    if (!selectedAccountId || !newLog.balance) return;
+  const handleAddLog = () => {
+    if (!selectedAccountId || !newLog.balance || !bankId) return;
     
-    const method = newLog.id ? 'PUT' : 'POST';
-    const url = newLog.id ? `/api/logs/${newLog.id}` : '/api/logs';
-    
-    const res = await fetch(url, {
-      method,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        account_id: selectedAccountId,
-        balance: parseFloat(newLog.balance),
-        currency: newLog.currency,
-        comment: newLog.comment,
-        recorded_at: newLog.recorded_at
-      })
-    });
-    
-    if (res.ok) {
-      fetchBankData();
-      setNewLog({ 
-        id: null,
-        balance: '', 
-        currency: 'USD',
-        comment: '',
-        recorded_at: new Date().toISOString().split('T')[0] 
-      });
-      setShowLogForm(false);
+    const logData = {
+      account_id: selectedAccountId,
+      balance: parseFloat(newLog.balance),
+      currency: newLog.currency,
+      comment: newLog.comment,
+      recorded_at: newLog.recorded_at
+    };
+
+    if (newLog.id) {
+      updateLog(newLog.id, logData);
+    } else {
+      addLog(logData);
     }
+    
+    const updated = getBank(bankId);
+    if (updated) setBank(updated);
+    
+    setNewLog({ 
+      id: null,
+      balance: '', 
+      currency: 'USD',
+      comment: '',
+      recorded_at: new Date().toISOString().split('T')[0] 
+    });
+    setShowLogForm(false);
   };
 
   const handleEditLog = (log: BalanceLog) => {
@@ -149,12 +137,11 @@ const AccountDetail: React.FC<AccountDetailProps> = ({ accountId: bankId, onBack
     setShowLogForm(true);
   };
 
-  const handleDeleteLog = async (logId: number) => {
-    if (!confirm(t('confirmDelete'))) return;
-    const res = await fetch(`/api/logs/${logId}`, { method: 'DELETE' });
-    if (res.ok) {
-      fetchBankData();
-    }
+  const handleDeleteLog = (logId: number) => {
+    if (!confirm(t('confirmDelete')) || !bankId) return;
+    deleteLog(logId);
+    const updated = getBank(bankId);
+    if (updated) setBank(updated);
   };
 
   if (loading) return <div className="p-8 text-center">Loading...</div>;

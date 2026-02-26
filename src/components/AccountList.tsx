@@ -14,20 +14,9 @@ interface AccountListProps {
 }
 
 const AccountList: React.FC<AccountListProps> = ({ onSelectAccount }) => {
-  const { t, owners } = useAppContext();
-  const [banks, setBanks] = useState<Bank[]>([]);
+  const { t, owners, banks } = useAppContext();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterOwner, setFilterOwner] = useState<string>('all');
-
-  const fetchBanks = async () => {
-    const res = await fetch('/api/accounts');
-    const data = await res.json();
-    setBanks(data);
-  };
-
-  useEffect(() => {
-    fetchBanks();
-  }, []);
 
   const filteredBanks = banks.filter(bank => {
     const matchesSearch = bank.name.toLowerCase().includes(searchTerm.toLowerCase()) || 

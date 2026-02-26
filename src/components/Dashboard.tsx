@@ -5,14 +5,7 @@ import { Wallet, TrendingUp, Users, PieChart as PieIcon } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 
 const Dashboard: React.FC = () => {
-  const { t, owners, fxRates, displayCurrency, setDisplayCurrency, currencies } = useAppContext();
-  const [banks, setBanks] = useState<Bank[]>([]);
-
-  useEffect(() => {
-    fetch('/api/accounts')
-      .then(res => res.json())
-      .then(data => setBanks(data));
-  }, []);
+  const { t, owners, fxRates, displayCurrency, setDisplayCurrency, currencies, banks } = useAppContext();
 
   const convertToDisplay = (amount: number, fromCurrency: string) => {
     if (fromCurrency === displayCurrency) return amount;

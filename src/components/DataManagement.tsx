@@ -10,39 +10,39 @@ function cn(...inputs: ClassValue[]) {
 }
 
 const DataManagement: React.FC = () => {
-  const { t } = useAppContext();
+  const { t, owners, banks, countries, currencies, fxRates, resetAllData, importAllData } = useAppContext();
   const [status, setStatus] = useState<{ type: 'success' | 'error' | 'loading', message: string } | null>(null);
 
   const handleExport = async () => {
     setStatus({ type: 'loading', message: 'Preparing export...' });
     try {
-      const res = await fetch('/api/export');
-      const data = await res.json();
+      // Get all raw data from localStorage via context
+      const accounts = JSON.parse(localStorage.getItem('accounts') || '[]');
+      const logs = JSON.parse(localStorage.getItem('logs') || '[]');
 
       const wb = XLSX.utils.book_new();
       
       // Owners Sheet
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(data.owners), "Owners");
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(owners), "Owners");
       
+      // Banks Sheet
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(banks), "Banks");
+
       // Accounts Sheet
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(data.accounts), "Accounts");
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(accounts), "Accounts");
       
       // Logs Sheet
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(data.logs), "BalanceLogs");
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(logs), "BalanceLogs");
 
       // Config Sheet
-      const configRes = await fetch('/api/config');
-      const configData = await configRes.json();
       const configRows = [
-        ...configData.countries.map((v: string) => ({ type: 'country', value: v })),
-        ...configData.currencies.map((v: string) => ({ type: 'currency', value: v }))
+        ...countries.map((v: string) => ({ type: 'country', value: v })),
+        ...currencies.map((v: string) => ({ type: 'currency', value: v }))
       ];
       XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(configRows), "ConfigOptions");
 
       // FX Rates Sheet
-      const fxRes = await fetch('/api/fx-rates');
-      const fxData = await fxRes.json();
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(fxData), "FXRates");
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(fxRates), "FXRates");
 
       XLSX.writeFile(wb, `AssetSnapshot_Export_${new Date().toISOString().split('T')[0]}.xlsx`);
       setStatus({ type: 'success', message: 'Data exported successfully!' });
@@ -63,47 +63,31 @@ const DataManagement: React.FC = () => {
         const bstr = evt.target?.result;
         const wb = XLSX.read(bstr, { type: 'binary' });
         
-        const owners = XLSX.utils.sheet_to_json(wb.Sheets["Owners"]);
-        const accounts = XLSX.utils.sheet_to_json(wb.Sheets["Accounts"]);
-        const logs = XLSX.utils.sheet_to_json(wb.Sheets["BalanceLogs"]);
+        const importedOwners = XLSX.utils.sheet_to_json(wb.Sheets["Owners"]);
+        const importedBanks = XLSX.utils.sheet_to_json(wb.Sheets["Banks"]);
+        const importedAccounts = XLSX.utils.sheet_to_json(wb.Sheets["Accounts"]);
+        const importedLogs = XLSX.utils.sheet_to_json(wb.Sheets["BalanceLogs"]);
         const config = XLSX.utils.sheet_to_json(wb.Sheets["ConfigOptions"]) as any[];
-        const fxRates = XLSX.utils.sheet_to_json(wb.Sheets["FXRates"]) as any[];
+        const importedFxRates = XLSX.utils.sheet_to_json(wb.Sheets["FXRates"]) as any[];
 
-        if (!owners || !accounts || !logs) {
+        if (!importedOwners || !importedAccounts || !importedLogs) {
           throw new Error("Invalid file structure. Missing required sheets.");
         }
 
-        // Import main data
-        const res = await fetch('/api/import', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ owners, accounts, logs })
+        const countries = config.filter(c => c.type === 'country').map(c => c.value);
+        const currencies = config.filter(c => c.type === 'currency').map(c => c.value);
+
+        importAllData({
+          owners: importedOwners,
+          banks: importedBanks,
+          accounts: importedAccounts,
+          logs: importedLogs,
+          countries,
+          currencies,
+          fxRates: importedFxRates
         });
 
-        if (!res.ok) throw new Error("Server rejected main data import.");
-
-        // Import config options
-        if (config) {
-          for (const opt of config) {
-            await fetch('/api/config', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(opt)
-            });
-          }
-        }
-
-        // Import FX rates
-        if (fxRates) {
-          await fetch('/api/fx-rates', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ rates: fxRates.map(r => ({ base: r.base_currency, target: r.target_currency, rate: r.rate })) })
-          });
-        }
-
         setStatus({ type: 'success', message: 'Data imported successfully! Page will refresh.' });
-        setTimeout(() => window.location.reload(), 2000);
       } catch (err: any) {
         setStatus({ type: 'error', message: `Import failed: ${err.message}` });
       }
@@ -111,21 +95,9 @@ const DataManagement: React.FC = () => {
     reader.readAsBinaryString(file);
   };
 
-  const handleReset = async () => {
+  const handleReset = () => {
     if (!confirm(t('resetWarning'))) return;
-    
-    setStatus({ type: 'loading', message: t('resetting') });
-    try {
-      const res = await fetch('/api/reset', { method: 'POST' });
-      if (res.ok) {
-        setStatus({ type: 'success', message: t('resetSuccess') });
-        setTimeout(() => window.location.reload(), 2000);
-      } else {
-        throw new Error("Reset failed");
-      }
-    } catch (e) {
-      setStatus({ type: 'error', message: 'Reset failed. Please try again.' });
-    }
+    resetAllData();
   };
 
   return (

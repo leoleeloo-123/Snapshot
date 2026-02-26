@@ -12,9 +12,9 @@ const Settings: React.FC = () => {
   const { 
     t, theme, setTheme, 
     language, setLanguage, 
-    owners, refreshOwners,
-    countries, currencies, refreshConfig,
-    fxRates, refreshFXRates
+    owners, addOwner, deleteOwner,
+    countries, currencies, addCountry, deleteCountry, addCurrency, deleteCurrency,
+    fxRates, updateFXRates
   } = useAppContext();
   
   const [newOwnerName, setNewOwnerName] = useState('');
@@ -22,91 +22,50 @@ const Settings: React.FC = () => {
   const [newCurrency, setNewCurrency] = useState('');
   const [isFetchingFX, setIsFetchingFX] = useState(false);
 
-  const handleAddOwner = async () => {
+  const handleAddOwner = () => {
     if (!newOwnerName.trim()) return;
-    try {
-      const res = await fetch('/api/owners', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: newOwnerName })
-      });
-      if (res.ok) {
-        setNewOwnerName('');
-        refreshOwners();
-      } else {
-        const data = await res.json();
-        alert(data.error || 'Failed to add owner');
-      }
-    } catch (e) {
-      alert('Network error. Please try again.');
-    }
+    addOwner(newOwnerName);
+    setNewOwnerName('');
   };
 
-  const handleDeleteOwner = async (id: number) => {
+  const handleDeleteOwner = (id: number) => {
     if (!confirm(t('confirmDelete'))) return;
-    try {
-      const res = await fetch(`/api/owners/${id}`, { method: 'DELETE' });
-      if (res.ok) refreshOwners();
-      else alert('Failed to delete owner');
-    } catch (e) {
-      alert('Network error');
-    }
+    deleteOwner(id);
   };
 
-  const handleAddConfig = async (type: 'country' | 'currency', value: string) => {
+  const handleAddConfig = (type: 'country' | 'currency', value: string) => {
     if (!value.trim()) return;
-    try {
-      const res = await fetch('/api/config', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type, value })
-      });
-      if (res.ok) {
-        if (type === 'country') setNewCountry('');
-        else setNewCurrency('');
-        refreshConfig();
-      } else {
-        const data = await res.json();
-        alert(data.error || 'Failed to add option');
-      }
-    } catch (e) {
-      alert('Network error');
+    if (type === 'country') {
+      addCountry(value);
+      setNewCountry('');
+    } else {
+      addCurrency(value);
+      setNewCurrency('');
     }
   };
 
-  const handleDeleteConfig = async (type: 'country' | 'currency', value: string) => {
+  const handleDeleteConfig = (type: 'country' | 'currency', value: string) => {
     if (!confirm(t('confirmDelete'))) return;
-    const res = await fetch('/api/config', {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type, value })
-    });
-    if (res.ok) refreshConfig();
+    if (type === 'country') deleteCountry(value);
+    else deleteCurrency(value);
   };
 
   const fetchLatestFXRates = async () => {
     setIsFetchingFX(true);
     try {
-      // Using frankfurter.app as a free API
       const res = await fetch('https://api.frankfurter.app/latest?from=USD');
       const data = await res.json();
       
       const ratesToStore = Object.entries(data.rates).map(([target, rate]) => ({
-        base: 'USD',
-        target,
-        rate
+        base_currency: 'USD',
+        target_currency: target,
+        rate: rate as number,
+        updated_at: new Date().toISOString()
       }));
       
-      // Add USD to USD rate
-      ratesToStore.push({ base: 'USD', target: 'USD', rate: 1 });
+      ratesToStore.push({ base_currency: 'USD', target_currency: 'USD', rate: 1, updated_at: new Date().toISOString() });
 
-      await fetch('/api/fx-rates', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ rates: ratesToStore })
-      });
-      
-      refreshFXRates();
+      updateFXRates(ratesToStore);
       alert('FX Rates updated successfully!');
     } catch (e) {
       console.error(e);
