@@ -11,209 +11,216 @@ const __dirname = path.dirname(__filename);
 const db = new Database("assets.db");
 
 // Initialize Database & Migrations
-db.exec(`
-  CREATE TABLE IF NOT EXISTS owners (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL UNIQUE
-  );
-
-  CREATE TABLE IF NOT EXISTS config_options (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    type TEXT NOT NULL, -- 'country' or 'currency'
-    value TEXT NOT NULL UNIQUE
-  );
-
-  CREATE TABLE IF NOT EXISTS fx_rates (
-    base_currency TEXT NOT NULL,
-    target_currency TEXT NOT NULL,
-    rate REAL NOT NULL,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (base_currency, target_currency)
-  );
-`);
-
-// Migration: Handle transition from single-account banks to multi-account banks
-try {
-  const tables = db.prepare("SELECT name FROM sqlite_master WHERE type='table'").all() as any[];
-  const accountsExists = tables.find(t => t.name === 'accounts') !== undefined;
-  
-  if (accountsExists) {
-    const accountCols = db.prepare("PRAGMA table_info(accounts)").all() as any[];
-    const isOldSchema = accountCols.find(c => c.name === 'owner_id') !== undefined;
-
-    if (isOldSchema) {
-      console.log("Migrating to multi-account schema...");
-      
-      // 1. Rename old accounts to a temporary name
-      db.exec("ALTER TABLE accounts RENAME TO old_accounts_migration");
-      
-      // 2. Create new tables
-      db.exec(`
-        CREATE TABLE banks (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          owner_id INTEGER NOT NULL,
-          name TEXT NOT NULL,
-          bank_name TEXT,
-          logo_color TEXT DEFAULT '#3b82f6',
-          country TEXT DEFAULT 'USA',
-          last_updated DATETIME DEFAULT CURRENT_TIMESTAMP,
-          FOREIGN KEY (owner_id) REFERENCES owners(id) ON DELETE CASCADE
-        );
-
-        CREATE TABLE accounts (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          bank_id INTEGER NOT NULL,
-          name TEXT NOT NULL,
-          type TEXT NOT NULL DEFAULT 'Bank',
-          account_number TEXT,
-          FOREIGN KEY (bank_id) REFERENCES banks(id) ON DELETE CASCADE
-        );
-
-        CREATE TABLE IF NOT EXISTS balance_logs (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          account_id INTEGER NOT NULL,
-          balance REAL NOT NULL,
-          currency TEXT DEFAULT 'USD',
-          comment TEXT,
-          recorded_at DATETIME NOT NULL,
-          FOREIGN KEY (account_id) REFERENCES accounts(id) ON DELETE CASCADE
-        );
-      `);
-
-      // 3. Migrate data
-      const oldData = db.prepare("SELECT * FROM old_accounts_migration").all() as any[];
-      for (const row of oldData) {
-        // Insert into banks
-        const bankResult = db.prepare(`
-          INSERT INTO banks (owner_id, name, bank_name, logo_color, country, last_updated)
-          VALUES (?, ?, ?, ?, ?, ?)
-        `).run(row.owner_id, row.name, row.bank_name, row.logo_color, row.country, row.last_updated);
-        
-        const bankId = bankResult.lastInsertRowid;
-        
-        // Create a default account for this bank
-        const accountResult = db.prepare(`
-          INSERT INTO accounts (bank_id, name, type, account_number)
-          VALUES (?, ?, ?, ?)
-        `).run(bankId, "Default Account", row.type || 'Bank', row.account_number);
-        
-        const newAccountId = accountResult.lastInsertRowid;
-        
-        // Update logs to point to the new account
-        db.prepare("UPDATE balance_logs SET account_id = ? WHERE account_id = ?").run(newAccountId, row.id);
-      }
-      
-      // 4. Drop temporary table
-      db.exec("DROP TABLE old_accounts_migration");
-      
-      console.log("Migration completed successfully.");
-    }
-  }
-
-  // Ensure all tables exist for fresh installs
+const initDb = () => {
+  console.log("Initializing database...");
   db.exec(`
-    CREATE TABLE IF NOT EXISTS banks (
+    CREATE TABLE IF NOT EXISTS owners (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      owner_id INTEGER NOT NULL,
-      name TEXT NOT NULL,
-      bank_name TEXT,
-      logo_color TEXT DEFAULT '#3b82f6',
-      country TEXT DEFAULT 'USA',
-      last_updated DATETIME DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (owner_id) REFERENCES owners(id) ON DELETE CASCADE
+      name TEXT NOT NULL UNIQUE
     );
 
-    CREATE TABLE IF NOT EXISTS accounts (
+    CREATE TABLE IF NOT EXISTS config_options (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      bank_id INTEGER NOT NULL,
-      name TEXT NOT NULL,
-      type TEXT NOT NULL DEFAULT 'Bank',
-      account_number TEXT,
-      FOREIGN KEY (bank_id) REFERENCES banks(id) ON DELETE CASCADE
+      type TEXT NOT NULL, -- 'country' or 'currency'
+      value TEXT NOT NULL UNIQUE
     );
 
-    CREATE TABLE IF NOT EXISTS balance_logs (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      account_id INTEGER NOT NULL,
-      balance REAL NOT NULL,
-      currency TEXT DEFAULT 'USD',
-      comment TEXT,
-      recorded_at DATETIME NOT NULL,
-      FOREIGN KEY (account_id) REFERENCES accounts(id) ON DELETE CASCADE
+    CREATE TABLE IF NOT EXISTS fx_rates (
+      base_currency TEXT NOT NULL,
+      target_currency TEXT NOT NULL,
+      rate REAL NOT NULL,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      PRIMARY KEY (base_currency, target_currency)
     );
   `);
 
-  // Ensure comment column exists (from previous migration)
-  const logCols = db.prepare("PRAGMA table_info(balance_logs)").all() as any[];
-  if (!logCols.find(c => c.name === 'comment')) {
-    db.exec("ALTER TABLE balance_logs ADD COLUMN comment TEXT");
+  // Migration: Handle transition from single-account banks to multi-account banks
+  try {
+    const tables = db.prepare("SELECT name FROM sqlite_master WHERE type='table'").all() as any[];
+    const accountsExists = tables.find(t => t.name === 'accounts') !== undefined;
+    
+    if (accountsExists) {
+      const accountCols = db.prepare("PRAGMA table_info(accounts)").all() as any[];
+      const isOldSchema = accountCols.find(c => c.name === 'owner_id') !== undefined;
+
+      if (isOldSchema) {
+        console.log("Migrating to multi-account schema...");
+        
+        // 1. Rename old accounts to a temporary name
+        db.exec("ALTER TABLE accounts RENAME TO old_accounts_migration");
+        
+        // 2. Create new tables
+        db.exec(`
+          CREATE TABLE banks (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            owner_id INTEGER NOT NULL,
+            name TEXT NOT NULL,
+            bank_name TEXT,
+            logo_color TEXT DEFAULT '#3b82f6',
+            country TEXT DEFAULT 'USA',
+            last_updated DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (owner_id) REFERENCES owners(id) ON DELETE CASCADE
+          );
+
+          CREATE TABLE accounts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            bank_id INTEGER NOT NULL,
+            name TEXT NOT NULL,
+            type TEXT NOT NULL DEFAULT 'Bank',
+            account_number TEXT,
+            FOREIGN KEY (bank_id) REFERENCES banks(id) ON DELETE CASCADE
+          );
+
+          CREATE TABLE IF NOT EXISTS balance_logs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            account_id INTEGER NOT NULL,
+            balance REAL NOT NULL,
+            currency TEXT DEFAULT 'USD',
+            comment TEXT,
+            recorded_at DATETIME NOT NULL,
+            FOREIGN KEY (account_id) REFERENCES accounts(id) ON DELETE CASCADE
+          );
+        `);
+
+        // 3. Migrate data
+        const oldData = db.prepare("SELECT * FROM old_accounts_migration").all() as any[];
+        for (const row of oldData) {
+          // Insert into banks
+          const bankResult = db.prepare(`
+            INSERT INTO banks (owner_id, name, bank_name, logo_color, country, last_updated)
+            VALUES (?, ?, ?, ?, ?, ?)
+          `).run(row.owner_id, row.name, row.bank_name, row.logo_color, row.country, row.last_updated);
+          
+          const bankId = bankResult.lastInsertRowid;
+          
+          // Create a default account for this bank
+          const accountResult = db.prepare(`
+            INSERT INTO accounts (bank_id, name, type, account_number)
+            VALUES (?, ?, ?, ?)
+          `).run(bankId, "Default Account", row.type || 'Bank', row.account_number);
+          
+          const newAccountId = accountResult.lastInsertRowid;
+          
+          // Update logs to point to the new account
+          db.prepare("UPDATE balance_logs SET account_id = ? WHERE account_id = ?").run(newAccountId, row.id);
+        }
+        
+        // 4. Drop temporary table
+        db.exec("DROP TABLE old_accounts_migration");
+        
+        console.log("Migration completed successfully.");
+      }
+    }
+
+    // Ensure all tables exist for fresh installs
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS banks (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        owner_id INTEGER NOT NULL,
+        name TEXT NOT NULL,
+        bank_name TEXT,
+        logo_color TEXT DEFAULT '#3b82f6',
+        country TEXT DEFAULT 'USA',
+        last_updated DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (owner_id) REFERENCES owners(id) ON DELETE CASCADE
+      );
+
+      CREATE TABLE IF NOT EXISTS accounts (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        bank_id INTEGER NOT NULL,
+        name TEXT NOT NULL,
+        type TEXT NOT NULL DEFAULT 'Bank',
+        account_number TEXT,
+        FOREIGN KEY (bank_id) REFERENCES banks(id) ON DELETE CASCADE
+      );
+
+      CREATE TABLE IF NOT EXISTS balance_logs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        account_id INTEGER NOT NULL,
+        balance REAL NOT NULL,
+        currency TEXT DEFAULT 'USD',
+        comment TEXT,
+        recorded_at DATETIME NOT NULL,
+        FOREIGN KEY (account_id) REFERENCES accounts(id) ON DELETE CASCADE
+      );
+    `);
+
+    // Ensure comment column exists (from previous migration)
+    const logCols = db.prepare("PRAGMA table_info(balance_logs)").all() as any[];
+    if (!logCols.find(c => c.name === 'comment')) {
+      db.exec("ALTER TABLE balance_logs ADD COLUMN comment TEXT");
+    }
+  } catch (e) {
+    console.error("Migration error:", e);
   }
-} catch (e) {
-  console.error("Migration error:", e);
-}
 
-// Seed initial data
-const ownerCount = db.prepare("SELECT COUNT(*) as count FROM owners").get() as { count: number };
-if (ownerCount.count === 0) {
-  db.prepare("INSERT INTO owners (name) VALUES (?)").run("Me");
-}
-
-const configCount = db.prepare("SELECT COUNT(*) as count FROM config_options").get() as { count: number };
-if (configCount.count === 0) {
-  ['USA', 'China', 'Hong Kong'].forEach(c => db.prepare("INSERT INTO config_options (type, value) VALUES ('country', ?)").run(c));
-  ['USD', 'CNY', 'HKD'].forEach(c => db.prepare("INSERT INTO config_options (type, value) VALUES ('currency', ?)").run(c));
-}
-
-// Demo Data Seeding
-const bankCount = db.prepare("SELECT COUNT(*) as count FROM banks").get() as { count: number };
-if (bankCount.count === 0) {
-  console.log("Seeding demo data...");
-  const owner = db.prepare("SELECT id FROM owners LIMIT 1").get() as { id: number };
-  if (owner) {
-    // Bank 1: Chase
-    const chaseResult = db.prepare(`
-      INSERT INTO banks (owner_id, name, bank_name, logo_color, country)
-      VALUES (?, 'Chase Main', 'Chase Bank', '#117aca', 'USA')
-    `).run(owner.id);
-    const chaseId = chaseResult.lastInsertRowid;
-
-    const chaseAcc1 = db.prepare(`
-      INSERT INTO accounts (bank_id, name, type, account_number)
-      VALUES (?, 'Checking', 'Bank', '**** 1234')
-    `).run(chaseId).lastInsertRowid;
-
-    const chaseAcc2 = db.prepare(`
-      INSERT INTO accounts (bank_id, name, type, account_number)
-      VALUES (?, 'Savings', 'Bank', '**** 5678')
-    `).run(chaseId).lastInsertRowid;
-
-    // Logs for Chase
-    const now = new Date();
-    const oneMonthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
-    const twoMonthsAgo = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000).toISOString();
-
-    db.prepare("INSERT INTO balance_logs (account_id, balance, currency, comment, recorded_at) VALUES (?, ?, 'USD', 'Initial deposit', ?)").run(chaseAcc1, 5000, twoMonthsAgo);
-    db.prepare("INSERT INTO balance_logs (account_id, balance, currency, comment, recorded_at) VALUES (?, ?, 'USD', 'Salary', ?)").run(chaseAcc1, 7500, oneMonthAgo);
-    db.prepare("INSERT INTO balance_logs (account_id, balance, currency, comment, recorded_at) VALUES (?, ?, 'USD', 'Current balance', ?)").run(chaseAcc1, 8200, now.toISOString());
-
-    db.prepare("INSERT INTO balance_logs (account_id, balance, currency, comment, recorded_at) VALUES (?, ?, 'USD', 'Initial savings', ?)").run(chaseAcc2, 10000, oneMonthAgo);
-    db.prepare("INSERT INTO balance_logs (account_id, balance, currency, comment, recorded_at) VALUES (?, ?, 'USD', 'Interest', ?)").run(chaseAcc2, 10050, now.toISOString());
-
-    // Bank 2: HSBC
-    const hsbcResult = db.prepare(`
-      INSERT INTO banks (owner_id, name, bank_name, logo_color, country)
-      VALUES (?, 'HSBC HK', 'HSBC', '#db0011', 'Hong Kong')
-    `).run(owner.id);
-    const hsbcId = hsbcResult.lastInsertRowid;
-
-    const hsbcAcc = db.prepare(`
-      INSERT INTO accounts (bank_id, name, type, account_number)
-      VALUES (?, 'HKD Savings', 'Bank', '**** 9999')
-    `).run(hsbcId).lastInsertRowid;
-
-    db.prepare("INSERT INTO balance_logs (account_id, balance, currency, comment, recorded_at) VALUES (?, ?, 'HKD', 'Savings', ?)").run(hsbcAcc, 50000, now.toISOString());
+  // Seed initial data
+  const ownerCount = db.prepare("SELECT COUNT(*) as count FROM owners").get() as { count: number };
+  if (ownerCount.count === 0) {
+    console.log("Seeding default owner...");
+    db.prepare("INSERT INTO owners (name) VALUES (?)").run("Me");
   }
-}
+
+  const configCount = db.prepare("SELECT COUNT(*) as count FROM config_options").get() as { count: number };
+  if (configCount.count === 0) {
+    console.log("Seeding default config options...");
+    ['USA', 'China', 'Hong Kong'].forEach(c => db.prepare("INSERT INTO config_options (type, value) VALUES ('country', ?)").run(c));
+    ['USD', 'CNY', 'HKD'].forEach(c => db.prepare("INSERT INTO config_options (type, value) VALUES ('currency', ?)").run(c));
+  }
+
+  // Demo Data Seeding
+  const bankCount = db.prepare("SELECT COUNT(*) as count FROM banks").get() as { count: number };
+  if (bankCount.count === 0) {
+    console.log("Seeding demo data...");
+    const owner = db.prepare("SELECT id FROM owners LIMIT 1").get() as { id: number };
+    if (owner) {
+      // Bank 1: Chase
+      const chaseResult = db.prepare(`
+        INSERT INTO banks (owner_id, name, bank_name, logo_color, country)
+        VALUES (?, 'Chase Main', 'Chase Bank', '#117aca', 'USA')
+      `).run(owner.id);
+      const chaseId = chaseResult.lastInsertRowid;
+
+      const chaseAcc1 = db.prepare(`
+        INSERT INTO accounts (bank_id, name, type, account_number)
+        VALUES (?, 'Checking', 'Bank', '**** 1234')
+      `).run(chaseId).lastInsertRowid;
+
+      const chaseAcc2 = db.prepare(`
+        INSERT INTO accounts (bank_id, name, type, account_number)
+        VALUES (?, 'Savings', 'Bank', '**** 5678')
+      `).run(chaseId).lastInsertRowid;
+
+      // Logs for Chase
+      const now = new Date();
+      const oneMonthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
+      const twoMonthsAgo = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000).toISOString();
+
+      db.prepare("INSERT INTO balance_logs (account_id, balance, currency, comment, recorded_at) VALUES (?, ?, 'USD', 'Initial deposit', ?)").run(chaseAcc1, 5000, twoMonthsAgo);
+      db.prepare("INSERT INTO balance_logs (account_id, balance, currency, comment, recorded_at) VALUES (?, ?, 'USD', 'Salary', ?)").run(chaseAcc1, 7500, oneMonthAgo);
+      db.prepare("INSERT INTO balance_logs (account_id, balance, currency, comment, recorded_at) VALUES (?, ?, 'USD', 'Current balance', ?)").run(chaseAcc1, 8200, now.toISOString());
+
+      db.prepare("INSERT INTO balance_logs (account_id, balance, currency, comment, recorded_at) VALUES (?, ?, 'USD', 'Initial savings', ?)").run(chaseAcc2, 10000, oneMonthAgo);
+      db.prepare("INSERT INTO balance_logs (account_id, balance, currency, comment, recorded_at) VALUES (?, ?, 'USD', 'Interest', ?)").run(chaseAcc2, 10050, now.toISOString());
+
+      // Bank 2: HSBC
+      const hsbcResult = db.prepare(`
+        INSERT INTO banks (owner_id, name, bank_name, logo_color, country)
+        VALUES (?, 'HSBC HK', 'HSBC', '#db0011', 'Hong Kong')
+      `).run(owner.id);
+      const hsbcId = hsbcResult.lastInsertRowid;
+
+      const hsbcAcc = db.prepare(`
+        INSERT INTO accounts (bank_id, name, type, account_number)
+        VALUES (?, 'HKD Savings', 'Bank', '**** 9999')
+      `).run(hsbcId).lastInsertRowid;
+
+      db.prepare("INSERT INTO balance_logs (account_id, balance, currency, comment, recorded_at) VALUES (?, ?, 'HKD', 'Savings', ?)").run(hsbcAcc, 50000, now.toISOString());
+    }
+  }
+};
+
+initDb();
 
 async function startServer() {
   const app = express();

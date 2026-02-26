@@ -24,34 +24,53 @@ const Settings: React.FC = () => {
 
   const handleAddOwner = async () => {
     if (!newOwnerName.trim()) return;
-    const res = await fetch('/api/owners', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: newOwnerName })
-    });
-    if (res.ok) {
-      setNewOwnerName('');
-      refreshOwners();
+    try {
+      const res = await fetch('/api/owners', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: newOwnerName })
+      });
+      if (res.ok) {
+        setNewOwnerName('');
+        refreshOwners();
+      } else {
+        const data = await res.json();
+        alert(data.error || 'Failed to add owner');
+      }
+    } catch (e) {
+      alert('Network error. Please try again.');
     }
   };
 
   const handleDeleteOwner = async (id: number) => {
     if (!confirm(t('confirmDelete'))) return;
-    const res = await fetch(`/api/owners/${id}`, { method: 'DELETE' });
-    if (res.ok) refreshOwners();
+    try {
+      const res = await fetch(`/api/owners/${id}`, { method: 'DELETE' });
+      if (res.ok) refreshOwners();
+      else alert('Failed to delete owner');
+    } catch (e) {
+      alert('Network error');
+    }
   };
 
   const handleAddConfig = async (type: 'country' | 'currency', value: string) => {
     if (!value.trim()) return;
-    const res = await fetch('/api/config', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type, value })
-    });
-    if (res.ok) {
-      if (type === 'country') setNewCountry('');
-      else setNewCurrency('');
-      refreshConfig();
+    try {
+      const res = await fetch('/api/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type, value })
+      });
+      if (res.ok) {
+        if (type === 'country') setNewCountry('');
+        else setNewCurrency('');
+        refreshConfig();
+      } else {
+        const data = await res.json();
+        alert(data.error || 'Failed to add option');
+      }
+    } catch (e) {
+      alert('Network error');
     }
   };
 
