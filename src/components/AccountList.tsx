@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Search, Filter, MoreHorizontal, ArrowUpRight, Landmark } from 'lucide-react';
+import { Plus, Search, Filter, MoreHorizontal, ArrowUpRight, Landmark, CreditCard } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import { Bank } from '../types';
 import { clsx, type ClassValue } from 'clsx';
@@ -14,14 +14,13 @@ interface AccountListProps {
 }
 
 const AccountList: React.FC<AccountListProps> = ({ onSelectAccount }) => {
-  const { t, owners, banks } = useAppContext();
+  const { t, owners, banks, selectedOwners, displayCurrency } = useAppContext();
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterOwner, setFilterOwner] = useState<string>('all');
 
   const filteredBanks = banks.filter(bank => {
     const matchesSearch = bank.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
                           bank.bank_name?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesOwner = filterOwner === 'all' || bank.owner_id.toString() === filterOwner;
+    const matchesOwner = selectedOwners.length === 0 || selectedOwners.includes(bank.owner_id);
     return matchesSearch && matchesOwner;
   });
 
@@ -51,17 +50,6 @@ const AccountList: React.FC<AccountListProps> = ({ onSelectAccount }) => {
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
           />
-        </div>
-        <div className="flex items-center gap-2 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl px-3 py-1">
-          <Filter size={16} className="text-[var(--text-secondary)]" />
-          <select 
-            value={filterOwner}
-            onChange={(e) => setFilterOwner(e.target.value)}
-            className="bg-transparent py-1.5 focus:outline-none text-sm font-medium"
-          >
-            <option value="all">All Owners</option>
-            {owners.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
-          </select>
         </div>
       </div>
 
@@ -98,14 +86,21 @@ const AccountList: React.FC<AccountListProps> = ({ onSelectAccount }) => {
               <div>
                 <p className="text-xs text-[var(--text-secondary)] uppercase font-bold tracking-widest">{t('totalBalance')}</p>
                 <p className="text-2xl font-mono font-bold mt-1">
-                  USD {bank.total_balance?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}
+                  {displayCurrency} {(bank.total_balance || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </p>
               </div>
               <div className="text-right">
-                <p className="text-[10px] text-[var(--text-secondary)] uppercase font-bold">{t('lastUpdated')}</p>
+                <p className="text-[10px] text-[var(--text-secondary)] uppercase font-bold">{t('lastUpdate')}</p>
                 <p className="text-xs font-medium mt-0.5">
                   {bank.last_updated ? new Date(bank.last_updated).toLocaleDateString() : 'Never'}
                 </p>
+              </div>
+            </div>
+            
+            <div className="mt-4 pt-4 border-t border-[var(--border-color)] flex items-center justify-between text-sm text-[var(--text-secondary)]">
+              <div className="flex items-center gap-1.5">
+                <CreditCard size={14} />
+                <span>{bank.account_count || 0} Accounts</span>
               </div>
             </div>
           </div>

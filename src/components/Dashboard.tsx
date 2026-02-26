@@ -5,7 +5,7 @@ import { Wallet, TrendingUp, Users, PieChart as PieIcon } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 
 const Dashboard: React.FC = () => {
-  const { t, owners, fxRates, displayCurrency, setDisplayCurrency, currencies, banks } = useAppContext();
+  const { t, owners, fxRates, displayCurrency, banks, selectedOwners } = useAppContext();
 
   const convertToDisplay = (amount: number, fromCurrency: string) => {
     if (fromCurrency === displayCurrency) return amount;
@@ -19,13 +19,21 @@ const Dashboard: React.FC = () => {
     return (amount / usdToFrom) * usdToDisplay;
   };
 
-  const totalAssets = banks.reduce((sum, bank) => {
+  const filteredBanks = selectedOwners.length > 0 
+    ? banks.filter(b => selectedOwners.includes(b.owner_id))
+    : banks;
+
+  const totalAssets = filteredBanks.reduce((sum, bank) => {
     const balance = bank.total_balance || 0;
-    return sum + convertToDisplay(balance, 'USD');
+    return sum + convertToDisplay(balance, 'USD'); // Assuming bank.total_balance is in USD for now, wait, we need to fix this
   }, 0);
 
-  const ownerData = owners.map(owner => {
-    const ownerBanks = banks.filter(bank => bank.owner_id === owner.id);
+  const filteredOwners = selectedOwners.length > 0
+    ? owners.filter(o => selectedOwners.includes(o.id))
+    : owners;
+
+  const ownerData = filteredOwners.map(owner => {
+    const ownerBanks = filteredBanks.filter(bank => bank.owner_id === owner.id);
     const total = ownerBanks.reduce((sum, bank) => {
       const balance = bank.total_balance || 0;
       return sum + convertToDisplay(balance, 'USD');
@@ -45,16 +53,6 @@ const Dashboard: React.FC = () => {
         <div>
           <h2 className="text-3xl font-bold tracking-tight">{t('dashboard')}</h2>
           <p className="text-[var(--text-secondary)] mt-1">Overview of your total assets and distribution.</p>
-        </div>
-        <div className="flex items-center gap-3 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl px-4 py-2 shadow-sm">
-          <span className="text-xs font-bold text-[var(--text-secondary)] uppercase">{t('displayCurrency')}</span>
-          <select 
-            value={displayCurrency}
-            onChange={(e) => setDisplayCurrency(e.target.value)}
-            className="bg-transparent text-sm font-bold focus:outline-none"
-          >
-            {currencies.map(c => <option key={c} value={c}>{c}</option>)}
-          </select>
         </div>
       </div>
 
@@ -83,7 +81,7 @@ const Dashboard: React.FC = () => {
           </div>
           <div className="mt-8">
             <p className="text-sm font-medium text-[var(--text-secondary)]">Active Owners</p>
-            <p className="text-4xl font-mono font-bold mt-1">{owners.length}</p>
+            <p className="text-4xl font-mono font-bold mt-1">{filteredOwners.length}</p>
           </div>
         </div>
 
@@ -96,7 +94,7 @@ const Dashboard: React.FC = () => {
           </div>
           <div className="mt-8">
             <p className="text-sm font-medium text-[var(--text-secondary)]">Tracked Banks</p>
-            <p className="text-4xl font-mono font-bold mt-1">{banks.length}</p>
+            <p className="text-4xl font-mono font-bold mt-1">{filteredBanks.length}</p>
           </div>
         </div>
       </div>

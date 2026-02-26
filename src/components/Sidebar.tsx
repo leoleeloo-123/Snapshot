@@ -1,5 +1,5 @@
 import React from 'react';
-import { LayoutDashboard, Users, Database, Settings, ChevronRight } from 'lucide-react';
+import { LayoutDashboard, Users, Database, Settings, ChevronRight, Globe, User } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -14,7 +14,7 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ activeModule, setActiveModule }) => {
-  const { t } = useAppContext();
+  const { t, displayCurrency, setDisplayCurrency, currencies, owners, selectedOwners, setSelectedOwners } = useAppContext();
 
   const menuItems = [
     { id: 'dashboard', label: t('dashboard'), icon: LayoutDashboard },
@@ -22,6 +22,14 @@ const Sidebar: React.FC<SidebarProps> = ({ activeModule, setActiveModule }) => {
     { id: 'data', label: t('dataManagement'), icon: Database },
     { id: 'settings', label: t('settings'), icon: Settings },
   ];
+
+  const handleOwnerToggle = (ownerId: number) => {
+    if (selectedOwners.includes(ownerId)) {
+      setSelectedOwners(selectedOwners.filter(id => id !== ownerId));
+    } else {
+      setSelectedOwners([...selectedOwners, ownerId]);
+    }
+  };
 
   return (
     <div className="w-64 h-screen border-r border-[var(--border-color)] bg-[var(--bg-secondary)] flex flex-col">
@@ -32,7 +40,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeModule, setActiveModule }) => {
         </h1>
       </div>
       
-      <nav className="flex-1 p-4 space-y-2">
+      <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
         {menuItems.map((item) => {
           const Icon = item.icon;
           const isActive = activeModule === item.id;
@@ -58,7 +66,51 @@ const Sidebar: React.FC<SidebarProps> = ({ activeModule, setActiveModule }) => {
         })}
       </nav>
       
-      <div className="p-4 border-t border-[var(--border-color)]">
+      <div className="p-4 border-t border-[var(--border-color)] space-y-4">
+        {/* Global Filters */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between px-2">
+            <span className="text-xs font-bold text-[var(--text-secondary)] uppercase flex items-center gap-1.5">
+              <Globe size={12} /> {t('displayCurrency')}
+            </span>
+            <select 
+              value={displayCurrency}
+              onChange={(e) => setDisplayCurrency(e.target.value)}
+              className="bg-transparent text-sm font-bold text-[var(--text-primary)] focus:outline-none cursor-pointer"
+            >
+              {currencies.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+          </div>
+
+          <div className="px-2">
+            <span className="text-xs font-bold text-[var(--text-secondary)] uppercase flex items-center gap-1.5 mb-2">
+              <User size={12} /> Filter Users
+            </span>
+            <div className="space-y-1">
+              <label className="flex items-center gap-2 text-sm text-[var(--text-primary)] cursor-pointer hover:bg-[var(--bg-primary)] p-1.5 rounded-lg transition-colors">
+                <input 
+                  type="checkbox" 
+                  checked={selectedOwners.length === 0}
+                  onChange={() => setSelectedOwners([])}
+                  className="rounded border-[var(--border-color)] text-blue-600 focus:ring-blue-500"
+                />
+                <span className={selectedOwners.length === 0 ? "font-bold" : ""}>All Users</span>
+              </label>
+              {owners.map(owner => (
+                <label key={owner.id} className="flex items-center gap-2 text-sm text-[var(--text-primary)] cursor-pointer hover:bg-[var(--bg-primary)] p-1.5 rounded-lg transition-colors">
+                  <input 
+                    type="checkbox" 
+                    checked={selectedOwners.includes(owner.id)}
+                    onChange={() => handleOwnerToggle(owner.id)}
+                    className="rounded border-[var(--border-color)] text-blue-600 focus:ring-blue-500"
+                  />
+                  <span className={selectedOwners.includes(owner.id) ? "font-bold" : ""}>{owner.name}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+        </div>
+
         <div className="p-3 rounded-xl bg-[var(--bg-primary)] flex items-center gap-3">
           <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-500" />
           <div className="flex-1 min-w-0">

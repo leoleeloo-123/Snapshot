@@ -23,7 +23,8 @@ const AccountDetail: React.FC<AccountDetailProps> = ({ accountId: bankId, onBack
     t, owners, countries, currencies, language,
     getBank, addBank, updateBank, deleteBank,
     addSubAccount, updateSubAccount, deleteSubAccount,
-    addLog, updateLog, deleteLog
+    addLog, updateLog, deleteLog,
+    displayCurrency, fxRates
   } = useAppContext();
   
   const [bank, setBank] = useState<Partial<Bank>>({
@@ -149,9 +150,17 @@ const AccountDetail: React.FC<AccountDetailProps> = ({ accountId: bankId, onBack
 
   const selectedAccount = bank.accounts?.find(a => a.id === selectedAccountId);
   
+  const convertToDisplay = (amount: number, fromCurrency: string) => {
+    if (fromCurrency === displayCurrency) return amount;
+    const usdToFrom = fxRates.find(r => r.base_currency === 'USD' && r.target_currency === fromCurrency)?.rate || 1;
+    const usdToDisplay = fxRates.find(r => r.base_currency === 'USD' && r.target_currency === displayCurrency)?.rate || 1;
+    return (amount / usdToFrom) * usdToDisplay;
+  };
+
   const totalBalance = bank.accounts?.reduce((sum, acc) => {
     const lastLog = acc.logs?.[0];
-    return sum + (lastLog?.balance || 0);
+    if (!lastLog) return sum;
+    return sum + convertToDisplay(lastLog.balance, lastLog.currency);
   }, 0) || 0;
 
   return (
@@ -209,7 +218,7 @@ const AccountDetail: React.FC<AccountDetailProps> = ({ accountId: bankId, onBack
               <div className="p-4 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/30">
                 <p className="text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase">{t('totalBalance')}</p>
                 <p className="text-xl font-mono font-bold mt-1 text-[var(--text-primary)]">
-                  USD {totalBalance.toLocaleString()}
+                  {displayCurrency} {totalBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </p>
               </div>
               <div className="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800/30">

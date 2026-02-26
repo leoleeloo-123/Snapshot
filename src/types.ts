@@ -17,6 +17,7 @@ export interface Bank {
   last_updated?: string;
   total_balance?: number;
   accounts?: Account[];
+  account_count?: number;
 }
 
 export interface Account {

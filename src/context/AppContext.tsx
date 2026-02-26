@@ -31,6 +31,8 @@ interface AppContextType {
   updateFXRates: (rates: FXRate[]) => void;
   displayCurrency: string;
   setDisplayCurrency: (curr: string) => void;
+  selectedOwners: number[];
+  setSelectedOwners: (owners: number[]) => void;
   t: (key: string) => string;
   resetAllData: () => void;
   importAllData: (data: any) => void;
@@ -185,6 +187,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [theme, setTheme] = useState<Theme>(() => (localStorage.getItem('theme') as Theme) || 'light');
   const [language, setLanguage] = useState<Language>(() => (localStorage.getItem('language') as Language) || 'en');
   const [displayCurrency, setDisplayCurrency] = useState<string>(() => localStorage.getItem('displayCurrency') || 'USD');
+  const [selectedOwners, setSelectedOwners] = useState<number[]>(() => JSON.parse(localStorage.getItem('selectedOwners') || '[]'));
 
   // Data States
   const [owners, setOwners] = useState<Owner[]>(() => JSON.parse(localStorage.getItem('owners') || '[]'));
@@ -199,6 +202,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   useEffect(() => { localStorage.setItem('theme', theme); document.documentElement.className = theme; }, [theme]);
   useEffect(() => { localStorage.setItem('language', language); }, [language]);
   useEffect(() => { localStorage.setItem('displayCurrency', displayCurrency); }, [displayCurrency]);
+  useEffect(() => { localStorage.setItem('selectedOwners', JSON.stringify(selectedOwners)); }, [selectedOwners]);
   useEffect(() => { localStorage.setItem('owners', JSON.stringify(owners)); }, [owners]);
   useEffect(() => { localStorage.setItem('banks', JSON.stringify(banks)); }, [banks]);
   useEffect(() => { localStorage.setItem('accounts', JSON.stringify(accounts)); }, [accounts]);
@@ -346,6 +350,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setTimeout(() => window.location.reload(), 500);
   };
 
+  const convertToDisplay = (amount: number, fromCurrency: string) => {
+    if (fromCurrency === displayCurrency) return amount;
+    const usdToFrom = fxRates.find(r => r.base_currency === 'USD' && r.target_currency === fromCurrency)?.rate || 1;
+    const usdToDisplay = fxRates.find(r => r.base_currency === 'USD' && r.target_currency === displayCurrency)?.rate || 1;
+    return (amount / usdToFrom) * usdToDisplay;
+  };
+
   const getBank = (id: number) => {
     const bank = banks.find(b => b.id === id);
     if (!bank) return undefined;
@@ -360,7 +371,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     let total_balance = 0;
     bankAccounts.forEach(acc => {
       if (acc.logs && acc.logs.length > 0) {
-        total_balance += acc.logs[0].balance;
+        total_balance += convertToDisplay(acc.logs[0].balance, acc.logs[0].currency);
       }
     });
 
@@ -380,13 +391,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     bankAccounts.forEach(acc => {
       const accountLogs = logs.filter(l => l.account_id === acc.id).sort((a, b) => new Date(b.recorded_at).getTime() - new Date(a.recorded_at).getTime());
       if (accountLogs.length > 0) {
-        total_balance += accountLogs[0].balance;
+        total_balance += convertToDisplay(accountLogs[0].balance, accountLogs[0].currency);
       }
     });
     return {
       ...b,
       owner_name: owner?.name,
-      total_balance
+      total_balance,
+      account_count: bankAccounts.length
     };
   });
 
@@ -406,6 +418,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       currencies, addCurrency, deleteCurrency,
       fxRates, updateFXRates,
       displayCurrency, setDisplayCurrency,
+      selectedOwners, setSelectedOwners,
       t, resetAllData, importAllData
     }}>
       {children}
