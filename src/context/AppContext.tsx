@@ -8,6 +8,7 @@ interface AppContextType {
   setLanguage: (lang: Language) => void;
   owners: Owner[];
   addOwner: (name: string) => void;
+  updateOwner: (id: number, name: string) => void;
   deleteOwner: (id: number) => void;
   banks: Bank[];
   getBank: (id: number) => Bank | undefined;
@@ -261,6 +262,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // CRUD Methods
   const addOwner = (name: string) => setOwners(prev => [...prev, { id: Date.now(), name }]);
+  const updateOwner = (id: number, name: string) => setOwners(prev => prev.map(o => o.id === id ? { ...o, name } : o));
   const deleteOwner = (id: number) => setOwners(prev => prev.filter(o => o.id !== id));
 
   const addBank = (bank: Omit<Bank, 'id' | 'accounts' | 'total_balance'>) => {
@@ -396,7 +398,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     <AppContext.Provider value={{ 
       theme, setTheme, 
       language, setLanguage, 
-      owners, addOwner, deleteOwner,
+      owners, addOwner, updateOwner, deleteOwner,
       banks: aggregatedBanks, getBank, addBank, updateBank, deleteBank,
       addSubAccount, updateSubAccount, deleteSubAccount,
       addLog, updateLog, deleteLog,

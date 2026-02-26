@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAppContext } from '../context/AppContext';
-import { Languages, Palette, Users, Plus, Trash2, Check, TrendingUp, Landmark, DollarSign, Loader2 } from 'lucide-react';
+import { Languages, Palette, Users, Plus, Trash2, Check, TrendingUp, Landmark, DollarSign, Loader2, Edit2, X } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -12,12 +12,14 @@ const Settings: React.FC = () => {
   const { 
     t, theme, setTheme, 
     language, setLanguage, 
-    owners, addOwner, deleteOwner,
+    owners, addOwner, updateOwner, deleteOwner,
     countries, currencies, addCountry, deleteCountry, addCurrency, deleteCurrency,
     fxRates, updateFXRates
   } = useAppContext();
   
   const [newOwnerName, setNewOwnerName] = useState('');
+  const [editingOwnerId, setEditingOwnerId] = useState<number | null>(null);
+  const [editingOwnerName, setEditingOwnerName] = useState('');
   const [newCountry, setNewCountry] = useState('');
   const [newCurrency, setNewCurrency] = useState('');
   const [isFetchingFX, setIsFetchingFX] = useState(false);
@@ -26,6 +28,19 @@ const Settings: React.FC = () => {
     if (!newOwnerName.trim()) return;
     addOwner(newOwnerName);
     setNewOwnerName('');
+  };
+
+  const handleEditOwner = (owner: { id: number, name: string }) => {
+    setEditingOwnerId(owner.id);
+    setEditingOwnerName(owner.name);
+  };
+
+  const handleSaveOwner = () => {
+    if (editingOwnerId && editingOwnerName.trim()) {
+      updateOwner(editingOwnerId, editingOwnerName.trim());
+    }
+    setEditingOwnerId(null);
+    setEditingOwnerName('');
   };
 
   const handleDeleteOwner = (id: number) => {
@@ -197,18 +212,53 @@ const Settings: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {owners.map((owner) => (
               <div key={owner.id} className="flex items-center justify-between p-4 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-color)] group">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-600 font-bold">
-                    {owner.name.charAt(0).toUpperCase()}
+                {editingOwnerId === owner.id ? (
+                  <div className="flex items-center gap-2 w-full">
+                    <input 
+                      type="text" 
+                      value={editingOwnerName}
+                      onChange={(e) => setEditingOwnerName(e.target.value)}
+                      className="flex-1 px-3 py-1.5 rounded-lg border border-[var(--border-color)] bg-[var(--bg-secondary)] focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-sm"
+                      autoFocus
+                      onKeyDown={(e) => e.key === 'Enter' && handleSaveOwner()}
+                    />
+                    <button 
+                      onClick={handleSaveOwner}
+                      className="p-1.5 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg transition-all"
+                    >
+                      <Check size={18} />
+                    </button>
+                    <button 
+                      onClick={() => setEditingOwnerId(null)}
+                      className="p-1.5 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-all"
+                    >
+                      <X size={18} />
+                    </button>
                   </div>
-                  <span className="font-bold">{owner.name}</span>
-                </div>
-                <button 
-                  onClick={() => handleDeleteOwner(owner.id)}
-                  className="p-2 text-red-500 opacity-0 group-hover:opacity-100 hover:bg-red-50 rounded-lg transition-all"
-                >
-                  <Trash2 size={18} />
-                </button>
+                ) : (
+                  <>
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-600 font-bold">
+                        {owner.name.charAt(0).toUpperCase()}
+                      </div>
+                      <span className="font-bold">{owner.name}</span>
+                    </div>
+                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                      <button 
+                        onClick={() => handleEditOwner(owner)}
+                        className="p-2 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-all"
+                      >
+                        <Edit2 size={18} />
+                      </button>
+                      <button 
+                        onClick={() => handleDeleteOwner(owner.id)}
+                        className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all"
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    </div>
+                  </>
+                )}
               </div>
             ))}
           </div>
