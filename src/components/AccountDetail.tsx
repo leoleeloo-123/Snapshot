@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   ArrowLeft, Save, Trash2, Plus, Calendar, DollarSign, 
-  Landmark, History, ExternalLink, Info, CreditCard, Clock, Edit2, TrendingUp
+  Landmark, History, ExternalLink, Info, CreditCard, Clock, Edit2, TrendingUp, ChevronDown, ChevronUp
 } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import { Bank, Account, BalanceLog } from '../types';
@@ -47,6 +47,7 @@ const AccountDetail: React.FC<AccountDetailProps> = ({ accountId: bankId, onBack
   });
 
   const [showLogForm, setShowLogForm] = useState(false);
+  const [showAllLogs, setShowAllLogs] = useState(false);
 
   useEffect(() => {
     if (bankId) {
@@ -525,52 +526,104 @@ const AccountDetail: React.FC<AccountDetailProps> = ({ accountId: bankId, onBack
               {selectedAccount && selectedAccount.logs && selectedAccount.logs.length > 0 ? (
                 <div className="relative">
                   <div className="absolute left-5 top-0 bottom-0 w-0.5 bg-[var(--border-color)]" />
-                  <div className="space-y-6 relative">
-                    {selectedAccount.logs.map((log, idx) => (
-                      <div key={log.id} className="flex items-start gap-6 group">
-                        <div className={cn(
-                          "w-10 h-10 rounded-full flex items-center justify-center z-10 shadow-sm border-4 border-[var(--bg-primary)]",
-                          idx === 0 ? "bg-blue-600 text-white" : "bg-[var(--bg-secondary)] text-[var(--text-secondary)]"
-                        )}>
-                          <Clock size={16} />
-                        </div>
-                        <div className={cn(
-                          "flex-1 p-5 rounded-2xl border transition-all group-hover:shadow-md",
-                          idx === 0 ? "bg-blue-50/30 dark:bg-blue-900/10 border-blue-100 dark:border-blue-800/30" : "bg-[var(--bg-primary)] border-[var(--border-color)]"
-                        )}>
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <p className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider">
-                                {new Date(log.recorded_at).toLocaleDateString(language === 'zh' ? 'zh-CN' : 'en-US', { dateStyle: 'long' })}
-                              </p>
-                              <p className="text-xl font-mono font-bold mt-1 text-[var(--text-primary)]">
-                                {log.currency} {log.balance.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                              </p>
-                              {log.comment && (
-                                <p className="text-xs text-[var(--text-secondary)] mt-2 italic bg-[var(--bg-secondary)] p-2 rounded-lg border border-[var(--border-color)]">
-                                  "{log.comment}"
-                                </p>
-                              )}
-                            </div>
-                            <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all">
-                              <button 
-                                onClick={() => handleEditLog(log)}
-                                className="p-2 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-all"
-                              >
-                                <Edit2 size={16} />
-                              </button>
-                              <button 
-                                onClick={() => handleDeleteLog(log.id)}
-                                className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all"
-                              >
-                                <Trash2 size={16} />
-                              </button>
+                  <div className="space-y-8 relative">
+                    {(showAllLogs ? selectedAccount.logs : selectedAccount.logs.slice(0, 3)).map((log, idx) => {
+                      const previousLog = selectedAccount.logs![idx + (showAllLogs ? 1 : (idx === 2 ? 0 : 1))];
+                      // Actually, we should always get the previous log from the FULL array, not the sliced one
+                      const realIdx = selectedAccount.logs!.findIndex(l => l.id === log.id);
+                      const actualPreviousLog = selectedAccount.logs![realIdx + 1];
+                      
+                      let diffString = null;
+                      let isPositive = true;
+                      if (actualPreviousLog) {
+                        const diff = log.balance - actualPreviousLog.balance;
+                        isPositive = diff >= 0;
+                        const diffSign = diff > 0 ? '+' : diff < 0 ? '-' : '';
+                        const diffAmount = Math.abs(diff).toLocaleString(undefined, { minimumFractionDigits: 2 });
+                        const daysDiff = Math.max(0, Math.round((new Date(log.recorded_at).getTime() - new Date(actualPreviousLog.recorded_at).getTime()) / (1000 * 3600 * 24)));
+                        diffString = `${diffSign} ${diffAmount} ${log.currency} in ${daysDiff} days`;
+                      }
+
+                      return (
+                        <div key={log.id} className="flex items-start gap-6 group relative">
+                          <div className={cn(
+                            "w-10 h-10 rounded-full flex items-center justify-center z-10 shadow-sm border-4 border-[var(--bg-primary)] mt-1",
+                            realIdx === 0 ? "bg-blue-600 text-white" : "bg-[var(--bg-secondary)] text-[var(--text-secondary)]"
+                          )}>
+                            <Clock size={16} />
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-2">
+                              {new Date(log.recorded_at).toLocaleDateString(language === 'zh' ? 'zh-CN' : 'en-US', { dateStyle: 'long' })}
+                            </p>
+                            <div className={cn(
+                              "p-5 rounded-2xl border transition-all group-hover:shadow-md",
+                              realIdx === 0 ? "bg-blue-50/30 dark:bg-blue-900/10 border-blue-100 dark:border-blue-800/30" : "bg-[var(--bg-primary)] border-[var(--border-color)]"
+                            )}>
+                              <div className="flex items-center justify-between">
+                                <div>
+                                  <p className="text-xl font-mono font-bold text-[var(--text-primary)]">
+                                    {log.currency} {log.balance.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                  </p>
+                                  {diffString && (
+                                    <p className={cn(
+                                      "text-xs font-bold mt-1",
+                                      isPositive ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"
+                                    )}>
+                                      {diffString}
+                                    </p>
+                                  )}
+                                  {log.comment && (
+                                    <div className="mt-3">
+                                      <p className="text-xs text-[var(--text-secondary)] italic bg-[var(--bg-secondary)] px-3 py-2 rounded-lg border border-[var(--border-color)] inline-block">
+                                        "{log.comment}"
+                                      </p>
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all">
+                                  <button 
+                                    onClick={() => handleEditLog(log)}
+                                    className="p-2 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-all"
+                                  >
+                                    <Edit2 size={16} />
+                                  </button>
+                                  <button 
+                                    onClick={() => handleDeleteLog(log.id)}
+                                    className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all"
+                                  >
+                                    <Trash2 size={16} />
+                                  </button>
+                                </div>
+                              </div>
                             </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
+                  {!showAllLogs && selectedAccount.logs.length > 3 && (
+                    <div className="mt-6 ml-16">
+                      <button 
+                        onClick={() => setShowAllLogs(true)}
+                        className="flex items-center justify-center gap-2 w-full py-3 text-sm font-bold text-blue-600 hover:text-blue-700 bg-blue-50/50 hover:bg-blue-50 dark:bg-blue-900/10 dark:hover:bg-blue-900/20 border border-blue-100 dark:border-blue-800/30 rounded-xl transition-all"
+                      >
+                        {language === 'zh' ? `展开${selectedAccount.logs.length - 3}条历史记录` : `Show ${selectedAccount.logs.length - 3} more logs`}
+                        <ChevronDown size={16} />
+                      </button>
+                    </div>
+                  )}
+                  {showAllLogs && selectedAccount.logs.length > 3 && (
+                    <div className="mt-6 ml-16">
+                      <button 
+                        onClick={() => setShowAllLogs(false)}
+                        className="flex items-center justify-center gap-2 w-full py-3 text-sm font-bold text-blue-600 hover:text-blue-700 bg-blue-50/50 hover:bg-blue-50 dark:bg-blue-900/10 dark:hover:bg-blue-900/20 border border-blue-100 dark:border-blue-800/30 rounded-xl transition-all"
+                      >
+                        {language === 'zh' ? '收起历史记录' : 'Show less'}
+                        <ChevronUp size={16} />
+                      </button>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="flex flex-col items-center justify-center py-20 text-center opacity-40">
