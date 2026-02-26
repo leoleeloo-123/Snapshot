@@ -12,6 +12,7 @@ export interface Bank {
   owner_name?: string;
   name: string;
   bank_name?: string;
+  institution_type?: string;
   logo_color?: string;
   country?: string;
   last_updated?: string;

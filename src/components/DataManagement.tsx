@@ -54,8 +54,8 @@ const DataManagement: React.FC = () => {
       // Owners Sheet
       XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(owners), "Owners");
       
-      // Banks Sheet
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(formattedBanks), "Banks");
+      // Institutions Sheet
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(formattedBanks), "Institutions");
 
       // Accounts Sheet
       XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(accounts), "Accounts");
@@ -94,7 +94,7 @@ const DataManagement: React.FC = () => {
         const wb = XLSX.read(bstr, { type: 'binary', cellDates: true });
         
         const importedOwners = XLSX.utils.sheet_to_json(wb.Sheets["Owners"] || wb.Sheets[wb.SheetNames[0]]);
-        const importedBanks = XLSX.utils.sheet_to_json(wb.Sheets["Banks"] || wb.Sheets[wb.SheetNames[1]]);
+        const importedBanks = XLSX.utils.sheet_to_json(wb.Sheets["Institutions"] || wb.Sheets["Banks"] || wb.Sheets[wb.SheetNames[1]]);
         const importedAccounts = XLSX.utils.sheet_to_json(wb.Sheets["Accounts"] || wb.Sheets[wb.SheetNames[2]]);
         const importedLogs = XLSX.utils.sheet_to_json(wb.Sheets["BalanceLogs"] || wb.Sheets[wb.SheetNames[3]]);
         const config = XLSX.utils.sheet_to_json(wb.Sheets["ConfigOptions"] || wb.Sheets[wb.SheetNames[4]]) as any[];

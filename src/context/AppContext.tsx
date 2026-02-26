@@ -112,6 +112,11 @@ const translations = {
     settingsDesc: 'Personalize your experience and manage users.',
     filterUsers: 'Filter Users',
     allUsers: 'All Users',
+    institutionType: 'Institution Type',
+    insurance: 'Insurance',
+    listView: 'List View',
+    trendView: 'Trend View',
+    editInstitution: 'Edit Institution',
   },
   zh: {
     dashboard: '仪表盘',
@@ -184,6 +189,11 @@ const translations = {
     settingsDesc: '个性化您的体验并管理用户。',
     filterUsers: '筛选用户',
     allUsers: '所有用户',
+    institutionType: '机构类型',
+    insurance: '保险',
+    listView: '列表视图',
+    trendView: '趋势视图',
+    editInstitution: '编辑机构',
   }
 };
 

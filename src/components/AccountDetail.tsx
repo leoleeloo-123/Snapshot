@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { 
   ArrowLeft, Save, Trash2, Plus, Calendar, DollarSign, 
-  Landmark, History, ExternalLink, Info, CreditCard, Clock, Edit2, TrendingUp, ChevronDown, ChevronUp
+  Landmark, History, ExternalLink, Info, CreditCard, Clock, Edit2, TrendingUp, ChevronDown, ChevronUp, List, LineChart as LineChartIcon
 } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import { Bank, Account, BalanceLog } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -51,6 +52,7 @@ const AccountDetail: React.FC<AccountDetailProps> = ({ accountId: bankId, onBack
   const [showAllLogs, setShowAllLogs] = useState(false);
   const [isEditingBank, setIsEditingBank] = useState(!bankId);
   const [showAllAccounts, setShowAllAccounts] = useState(false);
+  const [logViewMode, setLogViewMode] = useState<'list' | 'trend'>('list');
 
   useEffect(() => {
     if (bankId) {
@@ -188,6 +190,15 @@ const AccountDetail: React.FC<AccountDetailProps> = ({ accountId: bankId, onBack
         <div className="flex items-center gap-3">
           {bankId && (
             <button 
+              onClick={() => setIsEditingBank(true)} 
+              className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-blue-600 bg-[var(--bg-secondary)] border border-blue-100 dark:border-blue-900/30 rounded-xl hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all"
+            >
+              <Edit2 size={18} />
+              {t('editInstitution')}
+            </button>
+          )}
+          {bankId && (
+            <button 
               onClick={handleDeleteBank} 
               className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-red-600 bg-[var(--bg-secondary)] border border-red-100 dark:border-red-900/30 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 transition-all"
             >
@@ -286,6 +297,19 @@ const AccountDetail: React.FC<AccountDetailProps> = ({ accountId: bankId, onBack
                   </select>
                 </div>
                 <div>
+                  <label className="block text-[10px] font-bold text-[var(--text-secondary)] uppercase mb-1.5">{t('institutionType')}</label>
+                  <select 
+                    value={bank.institution_type || 'Bank'}
+                    onChange={e => setBank({...bank, institution_type: e.target.value})}
+                    className="w-full px-4 py-2.5 rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] focus:bg-[var(--bg-primary)] focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-[var(--text-primary)]"
+                  >
+                    <option value="Bank">{t('bank')}</option>
+                    <option value="Insurance">{t('insurance')}</option>
+                    <option value="Investment">{t('investment')}</option>
+                    <option value="Other">{t('other')}</option>
+                  </select>
+                </div>
+                <div>
                   <label className="block text-[10px] font-bold text-[var(--text-secondary)] uppercase mb-1.5">{t('country')}</label>
                   <select 
                     value={bank.country}
@@ -348,10 +372,7 @@ const AccountDetail: React.FC<AccountDetailProps> = ({ accountId: bankId, onBack
               </div>
             )}
           </div>
-        </div>
 
-        {/* Right Column (8/12) */}
-        <div className="lg:col-span-8 space-y-6">
           {/* Account Details Card (List of Sub-Accounts) */}
           <div className="card p-6 rounded-2xl shadow-sm">
             <div className="flex items-center justify-between mb-6">
@@ -504,7 +525,10 @@ const AccountDetail: React.FC<AccountDetailProps> = ({ accountId: bankId, onBack
               )}
             </AnimatePresence>
           </div>
+        </div>
 
+        {/* Right Column (8/12) */}
+        <div className="lg:col-span-8 space-y-6">
           {/* Log History Card */}
           <div className="card rounded-2xl shadow-sm overflow-hidden flex flex-col min-h-[500px]">
             <div className="p-6 border-b border-[var(--border-color)] flex items-center justify-between bg-[var(--bg-secondary)]">
@@ -517,26 +541,56 @@ const AccountDetail: React.FC<AccountDetailProps> = ({ accountId: bankId, onBack
                   <p className="text-xs text-[var(--text-secondary)]">{selectedAccount ? `${selectedAccount.name} - ${t('historicalSnapshots')}` : t('selectAccountToViewLogs')}</p>
                 </div>
               </div>
-              {selectedAccountId && (
-                <button 
-                  onClick={() => {
-                    if (!showLogForm) {
-                      setNewLog({ 
-                        id: null,
-                        balance: '', 
-                        currency: 'USD',
-                        comment: '',
-                        recorded_at: new Date().toISOString().split('T')[0] 
-                      });
-                    }
-                    setShowLogForm(!showLogForm);
-                  }}
-                  className="flex items-center gap-2 text-sm font-bold text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 px-4 py-2 rounded-xl transition-colors"
-                >
-                  <Plus size={18} />
-                  {t('addLog')}
-                </button>
-              )}
+              <div className="flex items-center gap-4">
+                {selectedAccountId && (
+                  <div className="flex bg-[var(--bg-primary)] rounded-lg p-1 border border-[var(--border-color)]">
+                    <button
+                      onClick={() => setLogViewMode('list')}
+                      className={cn(
+                        "px-3 py-1.5 text-xs font-bold rounded-md flex items-center gap-1.5 transition-all",
+                        logViewMode === 'list' 
+                          ? "bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 shadow-sm" 
+                          : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                      )}
+                    >
+                      <List size={14} />
+                      {t('listView')}
+                    </button>
+                    <button
+                      onClick={() => setLogViewMode('trend')}
+                      className={cn(
+                        "px-3 py-1.5 text-xs font-bold rounded-md flex items-center gap-1.5 transition-all",
+                        logViewMode === 'trend' 
+                          ? "bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 shadow-sm" 
+                          : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                      )}
+                    >
+                      <LineChartIcon size={14} />
+                      {t('trendView')}
+                    </button>
+                  </div>
+                )}
+                {selectedAccountId && (
+                  <button 
+                    onClick={() => {
+                      if (!showLogForm) {
+                        setNewLog({ 
+                          id: null,
+                          balance: '', 
+                          currency: 'USD',
+                          comment: '',
+                          recorded_at: new Date().toISOString().split('T')[0] 
+                        });
+                      }
+                      setShowLogForm(!showLogForm);
+                    }}
+                    className="flex items-center gap-2 text-sm font-bold text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 px-4 py-2 rounded-xl transition-colors"
+                  >
+                    <Plus size={18} />
+                    {t('addLog')}
+                  </button>
+                )}
+              </div>
             </div>
 
             <div className="flex-1 overflow-y-auto p-6 space-y-4">
@@ -615,117 +669,170 @@ const AccountDetail: React.FC<AccountDetailProps> = ({ accountId: bankId, onBack
               </AnimatePresence>
 
               {selectedAccount && selectedAccount.logs && selectedAccount.logs.length > 0 ? (
-                <div className="relative">
-                  <div className="absolute left-5 top-0 bottom-0 w-0.5 bg-[var(--border-color)]" />
-                  <div className="space-y-8 relative">
-                    {(showAllLogs ? selectedAccount.logs : selectedAccount.logs.slice(0, 3)).map((log, idx) => {
-                      const previousLog = selectedAccount.logs![idx + (showAllLogs ? 1 : (idx === 2 ? 0 : 1))];
-                      // Actually, we should always get the previous log from the FULL array, not the sliced one
-                      const realIdx = selectedAccount.logs!.findIndex(l => l.id === log.id);
-                      const actualPreviousLog = selectedAccount.logs![realIdx + 1];
-                      
-                      let diffString = null;
-                      let isPositive = true;
-                      if (actualPreviousLog) {
-                        const diff = log.balance - actualPreviousLog.balance;
-                        isPositive = diff >= 0;
-                        const diffSign = diff > 0 ? '+' : diff < 0 ? '-' : '';
-                        const diffAmount = Math.abs(diff).toLocaleString(undefined, { minimumFractionDigits: 2 });
-                        const daysDiff = Math.max(0, Math.round((new Date(log.recorded_at).getTime() - new Date(actualPreviousLog.recorded_at).getTime()) / (1000 * 3600 * 24)));
-                        diffString = `${diffSign} ${diffAmount} ${log.currency} in ${daysDiff} days`;
-                      }
+                logViewMode === 'list' ? (
+                  <div className="relative">
+                    <div className="absolute left-5 top-0 bottom-0 w-0.5 bg-[var(--border-color)]" />
+                    <div className="space-y-8 relative">
+                      {(showAllLogs ? selectedAccount.logs : selectedAccount.logs.slice(0, 3)).map((log, idx) => {
+                        const realIdx = selectedAccount.logs!.findIndex(l => l.id === log.id);
+                        const actualPreviousLog = selectedAccount.logs![realIdx + 1];
+                        
+                        let diffString = null;
+                        let isPositive = true;
+                        if (actualPreviousLog) {
+                          const diff = log.balance - actualPreviousLog.balance;
+                          isPositive = diff >= 0;
+                          const diffSign = diff > 0 ? '+' : diff < 0 ? '-' : '';
+                          const diffAmount = Math.abs(diff).toLocaleString(undefined, { minimumFractionDigits: 2 });
+                          const daysDiff = Math.max(0, Math.round((new Date(log.recorded_at).getTime() - new Date(actualPreviousLog.recorded_at).getTime()) / (1000 * 3600 * 24)));
+                          diffString = `${diffSign} ${diffAmount} ${log.currency} in ${daysDiff} days`;
+                        }
 
-                      return (
-                        <div key={log.id} className="flex items-start gap-6 group relative">
-                          <div className={cn(
-                            "w-10 h-10 rounded-full flex items-center justify-center z-10 shadow-sm border-4 border-[var(--bg-primary)] mt-1",
-                            realIdx === 0 ? "bg-blue-600 text-white" : "bg-[var(--bg-secondary)] text-[var(--text-secondary)]"
-                          )}>
-                            <Clock size={16} />
-                          </div>
-                          <div className="flex-1">
-                            <p className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-2">
-                              {new Date(log.recorded_at).toLocaleDateString(language === 'zh' ? 'zh-CN' : 'en-US', { dateStyle: 'long' })}
-                            </p>
+                        return (
+                          <div key={log.id} className="flex items-start gap-6 group relative">
                             <div className={cn(
-                              "p-4 rounded-2xl border transition-all group-hover:shadow-md",
-                              realIdx === 0 ? "bg-blue-50/30 dark:bg-blue-900/10 border-blue-100 dark:border-blue-800/30" : "bg-[var(--bg-primary)] border-[var(--border-color)]"
+                              "w-10 h-10 rounded-full flex items-center justify-center z-10 shadow-sm border-4 border-[var(--bg-primary)] mt-1",
+                              realIdx === 0 ? "bg-blue-600 text-white" : "bg-[var(--bg-secondary)] text-[var(--text-secondary)]"
                             )}>
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-6">
-                                  <div>
-                                    <p className="text-xl font-mono font-bold text-[var(--text-primary)]">
-                                      {log.currency} {log.balance.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                                    </p>
-                                    {diffString && (
-                                      <p className={cn(
-                                        "text-xs font-bold mt-1",
-                                        isPositive ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"
-                                      )}>
-                                        {diffString}
+                              <Clock size={16} />
+                            </div>
+                            <div className="flex-1">
+                              <p className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-2">
+                                {new Date(log.recorded_at).toLocaleDateString(language === 'zh' ? 'zh-CN' : 'en-US', { dateStyle: 'long' })}
+                              </p>
+                              <div className={cn(
+                                "p-4 rounded-2xl border transition-all group-hover:shadow-md",
+                                realIdx === 0 ? "bg-blue-50/30 dark:bg-blue-900/10 border-blue-100 dark:border-blue-800/30" : "bg-[var(--bg-primary)] border-[var(--border-color)]"
+                              )}>
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-6">
+                                    <div>
+                                      <p className="text-xl font-mono font-bold text-[var(--text-primary)]">
+                                        {log.currency} {log.balance.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                       </p>
+                                      {diffString && (
+                                        <p className={cn(
+                                          "text-xs font-bold mt-1",
+                                          isPositive ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"
+                                        )}>
+                                          {diffString}
+                                        </p>
+                                      )}
+                                    </div>
+                                    {log.comment && (
+                                      <div className="hidden md:block border-l border-[var(--border-color)] pl-6">
+                                        <p className="text-xs text-[var(--text-secondary)] italic bg-[var(--bg-secondary)] px-3 py-2 rounded-lg border border-[var(--border-color)] inline-block">
+                                          "{log.comment}"
+                                        </p>
+                                      </div>
                                     )}
                                   </div>
-                                  {log.comment && (
-                                    <div className="hidden md:block border-l border-[var(--border-color)] pl-6">
-                                      <p className="text-xs text-[var(--text-secondary)] italic bg-[var(--bg-secondary)] px-3 py-2 rounded-lg border border-[var(--border-color)] inline-block">
-                                        "{log.comment}"
-                                      </p>
-                                    </div>
-                                  )}
+                                  <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all">
+                                    <button 
+                                      onClick={() => handleEditLog(log)}
+                                      className="p-2 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-all"
+                                    >
+                                      <Edit2 size={16} />
+                                    </button>
+                                    <button 
+                                      onClick={() => handleDeleteLog(log.id)}
+                                      className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all"
+                                    >
+                                      <Trash2 size={16} />
+                                    </button>
+                                  </div>
                                 </div>
-                                <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all">
-                                  <button 
-                                    onClick={() => handleEditLog(log)}
-                                    className="p-2 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-all"
-                                  >
-                                    <Edit2 size={16} />
-                                  </button>
-                                  <button 
-                                    onClick={() => handleDeleteLog(log.id)}
-                                    className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all"
-                                  >
-                                    <Trash2 size={16} />
-                                  </button>
-                                </div>
+                                {/* Mobile comment view */}
+                                {log.comment && (
+                                  <div className="mt-3 md:hidden">
+                                    <p className="text-xs text-[var(--text-secondary)] italic bg-[var(--bg-secondary)] px-3 py-2 rounded-lg border border-[var(--border-color)] inline-block">
+                                      "{log.comment}"
+                                    </p>
+                                  </div>
+                                )}
                               </div>
-                              {/* Mobile comment view */}
-                              {log.comment && (
-                                <div className="mt-3 md:hidden">
-                                  <p className="text-xs text-[var(--text-secondary)] italic bg-[var(--bg-secondary)] px-3 py-2 rounded-lg border border-[var(--border-color)] inline-block">
-                                    "{log.comment}"
-                                  </p>
-                                </div>
-                              )}
                             </div>
                           </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
+                    </div>
+                    {!showAllLogs && selectedAccount.logs.length > 3 && (
+                      <div className="mt-6 ml-16">
+                        <button 
+                          onClick={() => setShowAllLogs(true)}
+                          className="flex items-center justify-center gap-2 w-full py-3 text-sm font-bold text-blue-600 hover:text-blue-700 bg-blue-50/50 hover:bg-blue-50 dark:bg-blue-900/10 dark:hover:bg-blue-900/20 border border-blue-100 dark:border-blue-800/30 rounded-xl transition-all"
+                        >
+                          {language === 'zh' ? `展开${selectedAccount.logs.length - 3}条历史记录` : `Show ${selectedAccount.logs.length - 3} more logs`}
+                          <ChevronDown size={16} />
+                        </button>
+                      </div>
+                    )}
+                    {showAllLogs && selectedAccount.logs.length > 3 && (
+                      <div className="mt-6 ml-16">
+                        <button 
+                          onClick={() => setShowAllLogs(false)}
+                          className="flex items-center justify-center gap-2 w-full py-3 text-sm font-bold text-blue-600 hover:text-blue-700 bg-blue-50/50 hover:bg-blue-50 dark:bg-blue-900/10 dark:hover:bg-blue-900/20 border border-blue-100 dark:border-blue-800/30 rounded-xl transition-all"
+                        >
+                          {language === 'zh' ? '收起历史记录' : 'Show less'}
+                          <ChevronUp size={16} />
+                        </button>
+                      </div>
+                    )}
                   </div>
-                  {!showAllLogs && selectedAccount.logs.length > 3 && (
-                    <div className="mt-6 ml-16">
-                      <button 
-                        onClick={() => setShowAllLogs(true)}
-                        className="flex items-center justify-center gap-2 w-full py-3 text-sm font-bold text-blue-600 hover:text-blue-700 bg-blue-50/50 hover:bg-blue-50 dark:bg-blue-900/10 dark:hover:bg-blue-900/20 border border-blue-100 dark:border-blue-800/30 rounded-xl transition-all"
+                ) : (
+                  <div className="h-[400px] w-full mt-4">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart
+                        data={[...selectedAccount.logs].reverse().map(log => ({
+                          date: new Date(log.recorded_at).toLocaleDateString(language === 'zh' ? 'zh-CN' : 'en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+                          balance: log.balance,
+                          currency: log.currency
+                        }))}
+                        margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
                       >
-                        {language === 'zh' ? `展开${selectedAccount.logs.length - 3}条历史记录` : `Show ${selectedAccount.logs.length - 3} more logs`}
-                        <ChevronDown size={16} />
-                      </button>
-                    </div>
-                  )}
-                  {showAllLogs && selectedAccount.logs.length > 3 && (
-                    <div className="mt-6 ml-16">
-                      <button 
-                        onClick={() => setShowAllLogs(false)}
-                        className="flex items-center justify-center gap-2 w-full py-3 text-sm font-bold text-blue-600 hover:text-blue-700 bg-blue-50/50 hover:bg-blue-50 dark:bg-blue-900/10 dark:hover:bg-blue-900/20 border border-blue-100 dark:border-blue-800/30 rounded-xl transition-all"
-                      >
-                        {language === 'zh' ? '收起历史记录' : 'Show less'}
-                        <ChevronUp size={16} />
-                      </button>
-                    </div>
-                  )}
-                </div>
+                        <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" vertical={false} />
+                        <XAxis 
+                          dataKey="date" 
+                          stroke="var(--text-secondary)" 
+                          fontSize={12}
+                          tickLine={false}
+                          axisLine={false}
+                          dy={10}
+                        />
+                        <YAxis 
+                          stroke="var(--text-secondary)" 
+                          fontSize={12}
+                          tickLine={false}
+                          axisLine={false}
+                          tickFormatter={(value) => value.toLocaleString()}
+                          dx={-10}
+                        />
+                        <Tooltip 
+                          contentStyle={{ 
+                            backgroundColor: 'var(--bg-primary)', 
+                            borderColor: 'var(--border-color)',
+                            borderRadius: '0.75rem',
+                            boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)'
+                          }}
+                          itemStyle={{ color: 'var(--text-primary)', fontWeight: 'bold' }}
+                          labelStyle={{ color: 'var(--text-secondary)', marginBottom: '0.25rem' }}
+                          formatter={(value: number, name: string, props: any) => [
+                            `${props.payload.currency} ${value.toLocaleString(undefined, { minimumFractionDigits: 2 })}`, 
+                            t('balance')
+                          ]}
+                        />
+                        <Line 
+                          type="monotone" 
+                          dataKey="balance" 
+                          stroke="#3b82f6" 
+                          strokeWidth={3}
+                          dot={{ fill: '#3b82f6', strokeWidth: 2, r: 4, stroke: 'var(--bg-primary)' }}
+                          activeDot={{ r: 6, strokeWidth: 0 }}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                )
               ) : (
                 <div className="flex flex-col items-center justify-center py-20 text-center opacity-40">
                   <History size={48} className="mb-4 text-[var(--text-secondary)]" />
