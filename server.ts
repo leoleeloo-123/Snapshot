@@ -8,11 +8,13 @@ import fs from "fs";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const db = new Database("assets.db");
+const dbPath = process.env.VERCEL ? path.join('/tmp', 'assets.db') : "assets.db";
+console.log(`Using database at: ${dbPath}`);
+const db = new Database(dbPath);
 
 // Initialize Database & Migrations
 const initDb = () => {
-  console.log("Initializing database...");
+  console.log("Initializing database schema...");
   db.exec(`
     CREATE TABLE IF NOT EXISTS owners (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -218,15 +220,25 @@ const initDb = () => {
       db.prepare("INSERT INTO balance_logs (account_id, balance, currency, comment, recorded_at) VALUES (?, ?, 'HKD', 'Savings', ?)").run(hsbcAcc, 50000, now.toISOString());
     }
   }
+  console.log("Database initialization complete.");
 };
 
-initDb();
+try {
+  initDb();
+} catch (e) {
+  console.error("Critical: Database initialization failed:", e);
+}
 
 async function startServer() {
   const app = express();
   const PORT = 3000;
 
   app.use(express.json({ limit: '50mb' }));
+
+  // Health check
+  app.get("/api/health", (req, res) => {
+    res.json({ status: "ok", database: dbPath });
+  });
 
   // --- API Routes ---
 
@@ -522,9 +534,14 @@ async function startServer() {
     });
   }
 
-  app.listen(PORT, "0.0.0.0", () => {
-    console.log(`Server running on http://localhost:${PORT}`);
-  });
+  if (!process.env.VERCEL) {
+    app.listen(PORT, "0.0.0.0", () => {
+      console.log(`Server running on http://localhost:${PORT}`);
+    });
+  }
+
+  return app;
 }
 
-startServer();
+const app = await startServer();
+export default app;
