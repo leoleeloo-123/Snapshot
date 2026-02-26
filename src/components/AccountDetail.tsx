@@ -152,20 +152,20 @@ const AccountDetail: React.FC<AccountDetailProps> = ({ accountId: bankId, onBack
   }, 0) || 0;
 
   return (
-    <div className="min-h-screen bg-[#f8fafc]">
+    <div className="min-h-screen bg-[var(--bg-primary)]">
       {/* Minimal Header - Aligned with content */}
       <div className="max-w-[1600px] mx-auto px-8 py-6 flex items-center justify-between">
         <div className="flex items-center gap-6">
-          <button onClick={onBack} className="w-10 h-10 flex items-center justify-center bg-white border border-gray-200 rounded-full hover:shadow-md transition-all">
+          <button onClick={onBack} className="w-10 h-10 flex items-center justify-center bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-full hover:shadow-md transition-all text-[var(--text-primary)]">
             <ArrowLeft size={20} />
           </button>
           <div>
             <div className="flex items-center gap-3">
-              <h1 className="text-3xl font-bold tracking-tight text-gray-900">
+              <h1 className="text-3xl font-bold tracking-tight text-[var(--text-primary)]">
                 {bankId ? bank.name : t('addAccount')}
               </h1>
             </div>
-            <div className="flex items-center gap-2 mt-1 text-sm text-gray-500">
+            <div className="flex items-center gap-2 mt-1 text-sm text-[var(--text-secondary)]">
               <Landmark size={14} />
               <span>{bank.bank_name || t('newAccountSetup')}</span>
               <span className="mx-1">•</span>
@@ -177,7 +177,7 @@ const AccountDetail: React.FC<AccountDetailProps> = ({ accountId: bankId, onBack
           {bankId && (
             <button 
               onClick={handleDeleteBank} 
-              className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-red-600 bg-white border border-red-100 rounded-xl hover:bg-red-50 transition-all"
+              className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-red-600 bg-[var(--bg-secondary)] border border-red-100 dark:border-red-900/30 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 transition-all"
             >
               <Trash2 size={18} />
               {t('delete')}
@@ -197,21 +197,21 @@ const AccountDetail: React.FC<AccountDetailProps> = ({ accountId: bankId, onBack
         {/* Left Column (4/12) */}
         <div className="lg:col-span-4 space-y-6">
           {/* Status Summary Card */}
-          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-            <h3 className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-6 flex items-center gap-2">
+          <div className="card p-6 rounded-2xl shadow-sm">
+            <h3 className="text-xs font-bold uppercase tracking-widest text-[var(--text-secondary)] mb-6 flex items-center gap-2">
               <TrendingUp size={14} className="text-blue-500" />
               {t('statusSummary')}
             </h3>
             <div className="grid grid-cols-2 gap-4">
-              <div className="p-4 rounded-xl bg-blue-50 border border-blue-100">
-                <p className="text-[10px] font-bold text-blue-600 uppercase">{t('totalBalance')}</p>
-                <p className="text-xl font-mono font-bold mt-1">
+              <div className="p-4 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/30">
+                <p className="text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase">{t('totalBalance')}</p>
+                <p className="text-xl font-mono font-bold mt-1 text-[var(--text-primary)]">
                   USD {totalBalance.toLocaleString()}
                 </p>
               </div>
-              <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-100">
-                <p className="text-[10px] font-bold text-emerald-600 uppercase">{t('lastUpdate')}</p>
-                <p className="text-sm font-bold mt-1">
+              <div className="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800/30">
+                <p className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase">{t('lastUpdate')}</p>
+                <p className="text-sm font-bold mt-1 text-[var(--text-primary)]">
                   {bank.last_updated ? new Date(bank.last_updated).toLocaleDateString(language === 'zh' ? 'zh-CN' : 'en-US', { dateStyle: 'medium' }) : t('never')}
                 </p>
               </div>
@@ -219,54 +219,54 @@ const AccountDetail: React.FC<AccountDetailProps> = ({ accountId: bankId, onBack
           </div>
 
           {/* Bank Information Card */}
-          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-            <h3 className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-6 flex items-center gap-2">
+          <div className="card p-6 rounded-2xl shadow-sm">
+            <h3 className="text-xs font-bold uppercase tracking-widest text-[var(--text-secondary)] mb-6 flex items-center gap-2">
               <Landmark size={14} className="text-blue-500" />
               {t('bankInformation')}
             </h3>
             <div className="space-y-5">
               <div>
-                <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1.5">{t('bankName')}</label>
+                <label className="block text-[10px] font-bold text-[var(--text-secondary)] uppercase mb-1.5">{t('bankName')}</label>
                 <input 
                   type="text" 
                   value={bank.bank_name}
                   onChange={e => setBank({...bank, bank_name: e.target.value})}
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
+                  className="w-full px-4 py-2.5 rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] focus:bg-[var(--bg-primary)] focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-[var(--text-primary)]"
                   placeholder="e.g. Bank of America"
                 />
               </div>
               <div>
-                <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1.5">{t('displayName')}</label>
+                <label className="block text-[10px] font-bold text-[var(--text-secondary)] uppercase mb-1.5">{t('displayName')}</label>
                 <input 
                   type="text" 
                   value={bank.name}
                   onChange={e => setBank({...bank, name: e.target.value})}
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
+                  className="w-full px-4 py-2.5 rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] focus:bg-[var(--bg-primary)] focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-[var(--text-primary)]"
                   placeholder="e.g. BoA"
                 />
               </div>
               <div>
-                <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1.5">{t('owner')}</label>
+                <label className="block text-[10px] font-bold text-[var(--text-secondary)] uppercase mb-1.5">{t('owner')}</label>
                 <select 
                   value={bank.owner_id}
                   onChange={e => setBank({...bank, owner_id: parseInt(e.target.value)})}
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
+                  className="w-full px-4 py-2.5 rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] focus:bg-[var(--bg-primary)] focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-[var(--text-primary)]"
                 >
                   {owners.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
                 </select>
               </div>
               <div>
-                <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1.5">{t('country')}</label>
+                <label className="block text-[10px] font-bold text-[var(--text-secondary)] uppercase mb-1.5">{t('country')}</label>
                 <select 
                   value={bank.country}
                   onChange={e => setBank({...bank, country: e.target.value})}
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
+                  className="w-full px-4 py-2.5 rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] focus:bg-[var(--bg-primary)] focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-[var(--text-primary)]"
                 >
                   {countries.map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
               <div>
-                <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1.5">{t('logoColor')}</label>
+                <label className="block text-[10px] font-bold text-[var(--text-secondary)] uppercase mb-1.5">{t('logoColor')}</label>
                 <div className="flex items-center gap-3">
                   <input 
                     type="color" 
@@ -274,7 +274,7 @@ const AccountDetail: React.FC<AccountDetailProps> = ({ accountId: bankId, onBack
                     onChange={e => setBank({...bank, logo_color: e.target.value})}
                     className="w-12 h-12 rounded-xl border-0 p-0 cursor-pointer overflow-hidden"
                   />
-                  <span className="text-sm font-mono text-gray-500 uppercase">{bank.logo_color}</span>
+                  <span className="text-sm font-mono text-[var(--text-secondary)] uppercase">{bank.logo_color}</span>
                 </div>
               </div>
             </div>
@@ -284,16 +284,16 @@ const AccountDetail: React.FC<AccountDetailProps> = ({ accountId: bankId, onBack
         {/* Right Column (8/12) */}
         <div className="lg:col-span-8 space-y-6">
           {/* Account Details Card (List of Sub-Accounts) */}
-          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+          <div className="card p-6 rounded-2xl shadow-sm">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xs font-bold uppercase tracking-widest text-gray-400 flex items-center gap-2">
+              <h3 className="text-xs font-bold uppercase tracking-widest text-[var(--text-secondary)] flex items-center gap-2">
                 <CreditCard size={14} className="text-blue-500" />
                 {t('accountDetails')}
               </h3>
               {bankId && (
                 <button 
                   onClick={() => setEditingAccount({ name: '', type: 'Bank', account_number: '' })}
-                  className="flex items-center gap-1 text-xs font-bold text-blue-600 hover:bg-blue-50 px-3 py-1.5 rounded-lg transition-colors"
+                  className="flex items-center gap-1 text-xs font-bold text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 px-3 py-1.5 rounded-lg transition-colors"
                 >
                   <Plus size={14} />
                   {t('addAccount')}
@@ -308,31 +308,31 @@ const AccountDetail: React.FC<AccountDetailProps> = ({ accountId: bankId, onBack
                   onClick={() => setSelectedAccountId(acc.id)}
                   className={cn(
                     "p-4 rounded-xl border transition-all cursor-pointer flex items-center justify-between group",
-                    selectedAccountId === acc.id ? "bg-blue-50 border-blue-200" : "bg-gray-50 border-gray-100 hover:border-gray-200"
+                    selectedAccountId === acc.id ? "bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800/30" : "bg-[var(--bg-secondary)] border-[var(--border-color)] hover:border-[var(--text-secondary)]"
                   )}
                 >
                   <div className="flex items-center gap-4">
                     <div className={cn(
                       "w-10 h-10 rounded-lg flex items-center justify-center",
-                      selectedAccountId === acc.id ? "bg-blue-600 text-white" : "bg-white text-gray-400 border border-gray-100"
+                      selectedAccountId === acc.id ? "bg-blue-600 text-white" : "bg-[var(--bg-primary)] text-[var(--text-secondary)] border border-[var(--border-color)]"
                     )}>
                       <CreditCard size={18} />
                     </div>
                     <div>
-                      <p className="font-bold text-gray-900">{acc.name}</p>
-                      <p className="text-xs text-gray-500">{acc.account_number || 'No Number'} • {t(acc.type.toLowerCase())}</p>
+                      <p className="font-bold text-[var(--text-primary)]">{acc.name}</p>
+                      <p className="text-xs text-[var(--text-secondary)]">{acc.account_number || 'No Number'} • {t(acc.type.toLowerCase())}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all">
                     <button 
                       onClick={(e) => { e.stopPropagation(); setEditingAccount(acc); }}
-                      className="p-2 text-blue-500 hover:bg-blue-100 rounded-lg"
+                      className="p-2 text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-lg"
                     >
                       <Edit2 size={16} />
                     </button>
                     <button 
                       onClick={(e) => { e.stopPropagation(); handleDeleteSubAccount(acc.id); }}
-                      className="p-2 text-red-500 hover:bg-red-100 rounded-lg"
+                      className="p-2 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg"
                     >
                       <Trash2 size={16} />
                     </button>
@@ -341,7 +341,7 @@ const AccountDetail: React.FC<AccountDetailProps> = ({ accountId: bankId, onBack
               ))}
 
               {(!bank.accounts || bank.accounts.length === 0) && (
-                <div className="text-center py-8 text-gray-400">
+                <div className="text-center py-8 text-[var(--text-secondary)]">
                   <p className="text-sm">No accounts added yet.</p>
                 </div>
               )}
@@ -350,41 +350,41 @@ const AccountDetail: React.FC<AccountDetailProps> = ({ accountId: bankId, onBack
             {/* Sub-Account Edit Form Modal/Overlay */}
             <AnimatePresence>
               {editingAccount && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/20 backdrop-blur-sm">
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
                   <motion.div 
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.95 }}
-                    className="bg-white rounded-2xl p-6 shadow-2xl border border-gray-100 w-full max-w-md"
+                    className="bg-[var(--bg-primary)] rounded-2xl p-6 shadow-2xl border border-[var(--border-color)] w-full max-w-md"
                   >
-                    <h4 className="text-lg font-bold mb-6">{editingAccount.id ? t('editAccount') : t('addAccount')}</h4>
+                    <h4 className="text-lg font-bold mb-6 text-[var(--text-primary)]">{editingAccount.id ? t('editAccount') : t('addAccount')}</h4>
                     <div className="space-y-4">
                       <div>
-                        <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1.5">{t('accountName')}</label>
+                        <label className="block text-[10px] font-bold text-[var(--text-secondary)] uppercase mb-1.5">{t('accountName')}</label>
                         <input 
                           type="text" 
                           value={editingAccount.name}
                           onChange={e => setEditingAccount({...editingAccount, name: e.target.value})}
-                          className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
+                          className="w-full px-4 py-2.5 rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] focus:bg-[var(--bg-primary)] focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-[var(--text-primary)]"
                           placeholder="e.g. Savings Account"
                         />
                       </div>
                       <div>
-                        <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1.5">{t('accountNumber')}</label>
+                        <label className="block text-[10px] font-bold text-[var(--text-secondary)] uppercase mb-1.5">{t('accountNumber')}</label>
                         <input 
                           type="text" 
                           value={editingAccount.account_number}
                           onChange={e => setEditingAccount({...editingAccount, account_number: e.target.value})}
-                          className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
+                          className="w-full px-4 py-2.5 rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] focus:bg-[var(--bg-primary)] focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-[var(--text-primary)]"
                           placeholder="**** 1234"
                         />
                       </div>
                       <div>
-                        <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1.5">{t('accountType')}</label>
+                        <label className="block text-[10px] font-bold text-[var(--text-secondary)] uppercase mb-1.5">{t('accountType')}</label>
                         <select 
                           value={editingAccount.type}
                           onChange={e => setEditingAccount({...editingAccount, type: e.target.value})}
-                          className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
+                          className="w-full px-4 py-2.5 rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] focus:bg-[var(--bg-primary)] focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-[var(--text-primary)]"
                         >
                           <option value="Bank">{t('bank')}</option>
                           <option value="Credit">{t('credit')}</option>
@@ -396,7 +396,7 @@ const AccountDetail: React.FC<AccountDetailProps> = ({ accountId: bankId, onBack
                     <div className="flex justify-end gap-3 mt-8">
                       <button 
                         onClick={() => setEditingAccount(null)}
-                        className="px-4 py-2 text-sm font-bold text-gray-500 hover:bg-gray-100 rounded-xl transition-colors"
+                        className="px-4 py-2 text-sm font-bold text-[var(--text-secondary)] hover:bg-[var(--bg-secondary)] rounded-xl transition-colors"
                       >
                         {t('cancel')}
                       </button>
@@ -414,15 +414,15 @@ const AccountDetail: React.FC<AccountDetailProps> = ({ accountId: bankId, onBack
           </div>
 
           {/* Log History Card */}
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col min-h-[500px]">
-            <div className="p-6 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+          <div className="card rounded-2xl shadow-sm overflow-hidden flex flex-col min-h-[500px]">
+            <div className="p-6 border-b border-[var(--border-color)] flex items-center justify-between bg-[var(--bg-secondary)]">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600">
+                <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-blue-600 dark:text-blue-400">
                   <History size={20} />
                 </div>
                 <div>
-                  <h3 className="font-bold text-lg">{t('logHistory')}</h3>
-                  <p className="text-xs text-gray-400">{selectedAccount ? `${selectedAccount.name} - ${t('historicalSnapshots')}` : t('selectAccountToViewLogs')}</p>
+                  <h3 className="font-bold text-lg text-[var(--text-primary)]">{t('logHistory')}</h3>
+                  <p className="text-xs text-[var(--text-secondary)]">{selectedAccount ? `${selectedAccount.name} - ${t('historicalSnapshots')}` : t('selectAccountToViewLogs')}</p>
                 </div>
               </div>
               {selectedAccountId && (
@@ -439,7 +439,7 @@ const AccountDetail: React.FC<AccountDetailProps> = ({ accountId: bankId, onBack
                     }
                     setShowLogForm(!showLogForm);
                   }}
-                  className="flex items-center gap-2 text-sm font-bold text-blue-600 hover:bg-blue-50 px-4 py-2 rounded-xl transition-colors"
+                  className="flex items-center gap-2 text-sm font-bold text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 px-4 py-2 rounded-xl transition-colors"
                 >
                   <Plus size={18} />
                   {t('addLog')}
@@ -454,11 +454,11 @@ const AccountDetail: React.FC<AccountDetailProps> = ({ accountId: bankId, onBack
                     initial={{ opacity: 0, y: -20 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -20 }}
-                    className="p-6 rounded-2xl bg-blue-50 border border-blue-100 mb-6"
+                    className="p-6 rounded-2xl bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/30 mb-6"
                   >
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                       <div>
-                        <label className="block text-[10px] font-bold text-blue-600 uppercase mb-1.5">{t('amount')}</label>
+                        <label className="block text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase mb-1.5">{t('amount')}</label>
                         <div className="relative">
                           <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-500" size={16} />
                           <input 
@@ -466,40 +466,40 @@ const AccountDetail: React.FC<AccountDetailProps> = ({ accountId: bankId, onBack
                             step="0.01"
                             value={newLog.balance}
                             onChange={e => setNewLog({...newLog, balance: e.target.value})}
-                            className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-blue-200 bg-white focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
+                            className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-blue-200 dark:border-blue-800/30 bg-[var(--bg-primary)] focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-[var(--text-primary)]"
                             placeholder="0.00"
                           />
                         </div>
                       </div>
                       <div>
-                        <label className="block text-[10px] font-bold text-blue-600 uppercase mb-1.5">{t('currency')}</label>
+                        <label className="block text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase mb-1.5">{t('currency')}</label>
                         <select 
                           value={newLog.currency}
                           onChange={e => setNewLog({...newLog, currency: e.target.value})}
-                          className="w-full px-4 py-2.5 rounded-xl border border-blue-200 bg-white focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
+                          className="w-full px-4 py-2.5 rounded-xl border border-blue-200 dark:border-blue-800/30 bg-[var(--bg-primary)] focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-[var(--text-primary)]"
                         >
                           {currencies.map(c => <option key={c} value={c}>{c}</option>)}
                         </select>
                       </div>
                       <div>
-                        <label className="block text-[10px] font-bold text-blue-600 uppercase mb-1.5">{t('date')}</label>
+                        <label className="block text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase mb-1.5">{t('date')}</label>
                         <div className="relative">
                           <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-500" size={16} />
                           <input 
                             type="date" 
                             value={newLog.recorded_at}
                             onChange={e => setNewLog({...newLog, recorded_at: e.target.value})}
-                            className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-blue-200 bg-white focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
+                            className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-blue-200 dark:border-blue-800/30 bg-[var(--bg-primary)] focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-[var(--text-primary)]"
                           />
                         </div>
                       </div>
                       <div>
-                        <label className="block text-[10px] font-bold text-blue-600 uppercase mb-1.5">{t('comment')}</label>
+                        <label className="block text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase mb-1.5">{t('comment')}</label>
                         <input 
                           type="text" 
                           value={newLog.comment}
                           onChange={e => setNewLog({...newLog, comment: e.target.value})}
-                          className="w-full px-4 py-2.5 rounded-xl border border-blue-200 bg-white focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
+                          className="w-full px-4 py-2.5 rounded-xl border border-blue-200 dark:border-blue-800/30 bg-[var(--bg-primary)] focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-[var(--text-primary)]"
                           placeholder={t('optionalComment')}
                         />
                       </div>
@@ -507,7 +507,7 @@ const AccountDetail: React.FC<AccountDetailProps> = ({ accountId: bankId, onBack
                     <div className="flex justify-end gap-3 mt-4">
                       <button 
                         onClick={() => setShowLogForm(false)}
-                        className="px-4 py-2 text-sm font-bold text-gray-500 hover:bg-gray-100 rounded-xl transition-colors"
+                        className="px-4 py-2 text-sm font-bold text-[var(--text-secondary)] hover:bg-[var(--bg-secondary)] rounded-xl transition-colors"
                       >
                         {t('cancel')}
                       </button>
@@ -524,30 +524,30 @@ const AccountDetail: React.FC<AccountDetailProps> = ({ accountId: bankId, onBack
 
               {selectedAccount && selectedAccount.logs && selectedAccount.logs.length > 0 ? (
                 <div className="relative">
-                  <div className="absolute left-5 top-0 bottom-0 w-0.5 bg-gray-100" />
+                  <div className="absolute left-5 top-0 bottom-0 w-0.5 bg-[var(--border-color)]" />
                   <div className="space-y-6 relative">
                     {selectedAccount.logs.map((log, idx) => (
                       <div key={log.id} className="flex items-start gap-6 group">
                         <div className={cn(
-                          "w-10 h-10 rounded-full flex items-center justify-center z-10 shadow-sm border-4 border-white",
-                          idx === 0 ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-400"
+                          "w-10 h-10 rounded-full flex items-center justify-center z-10 shadow-sm border-4 border-[var(--bg-primary)]",
+                          idx === 0 ? "bg-blue-600 text-white" : "bg-[var(--bg-secondary)] text-[var(--text-secondary)]"
                         )}>
                           <Clock size={16} />
                         </div>
                         <div className={cn(
                           "flex-1 p-5 rounded-2xl border transition-all group-hover:shadow-md",
-                          idx === 0 ? "bg-blue-50/30 border-blue-100" : "bg-white border-gray-100"
+                          idx === 0 ? "bg-blue-50/30 dark:bg-blue-900/10 border-blue-100 dark:border-blue-800/30" : "bg-[var(--bg-primary)] border-[var(--border-color)]"
                         )}>
                           <div className="flex items-center justify-between">
                             <div>
-                              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                              <p className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider">
                                 {new Date(log.recorded_at).toLocaleDateString(language === 'zh' ? 'zh-CN' : 'en-US', { dateStyle: 'long' })}
                               </p>
-                              <p className="text-xl font-mono font-bold mt-1 text-gray-900">
+                              <p className="text-xl font-mono font-bold mt-1 text-[var(--text-primary)]">
                                 {log.currency} {log.balance.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                               </p>
                               {log.comment && (
-                                <p className="text-xs text-gray-500 mt-2 italic bg-gray-50 p-2 rounded-lg border border-gray-100">
+                                <p className="text-xs text-[var(--text-secondary)] mt-2 italic bg-[var(--bg-secondary)] p-2 rounded-lg border border-[var(--border-color)]">
                                   "{log.comment}"
                                 </p>
                               )}
@@ -555,13 +555,13 @@ const AccountDetail: React.FC<AccountDetailProps> = ({ accountId: bankId, onBack
                             <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all">
                               <button 
                                 onClick={() => handleEditLog(log)}
-                                className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition-all"
+                                className="p-2 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-all"
                               >
                                 <Edit2 size={16} />
                               </button>
                               <button 
                                 onClick={() => handleDeleteLog(log.id)}
-                                className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                                className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all"
                               >
                                 <Trash2 size={16} />
                               </button>
@@ -574,9 +574,9 @@ const AccountDetail: React.FC<AccountDetailProps> = ({ accountId: bankId, onBack
                 </div>
               ) : (
                 <div className="flex flex-col items-center justify-center py-20 text-center opacity-40">
-                  <History size={48} className="mb-4" />
-                  <p className="text-lg font-medium">{selectedAccountId ? t('noLogs') : t('selectAccountToViewLogs')}</p>
-                  <p className="text-sm">{selectedAccountId ? 'Start by adding your first balance snapshot.' : 'Please select an account from the list above.'}</p>
+                  <History size={48} className="mb-4 text-[var(--text-secondary)]" />
+                  <p className="text-lg font-medium text-[var(--text-primary)]">{selectedAccountId ? t('noLogs') : t('selectAccountToViewLogs')}</p>
+                  <p className="text-sm text-[var(--text-secondary)]">{selectedAccountId ? 'Start by adding your first balance snapshot.' : 'Please select an account from the list above.'}</p>
                 </div>
               )}
             </div>
