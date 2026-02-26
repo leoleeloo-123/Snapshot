@@ -48,6 +48,8 @@ const AccountDetail: React.FC<AccountDetailProps> = ({ accountId: bankId, onBack
 
   const [showLogForm, setShowLogForm] = useState(false);
   const [showAllLogs, setShowAllLogs] = useState(false);
+  const [isEditingBank, setIsEditingBank] = useState(!bankId);
+  const [showAllAccounts, setShowAllAccounts] = useState(false);
 
   useEffect(() => {
     if (bankId) {
@@ -220,65 +222,122 @@ const AccountDetail: React.FC<AccountDetailProps> = ({ accountId: bankId, onBack
           </div>
 
           {/* Bank Information Card */}
-          <div className="card p-6 rounded-2xl shadow-sm">
-            <h3 className="text-xs font-bold uppercase tracking-widest text-[var(--text-secondary)] mb-6 flex items-center gap-2">
-              <Landmark size={14} className="text-blue-500" />
-              {t('bankInformation')}
-            </h3>
-            <div className="space-y-5">
-              <div>
-                <label className="block text-[10px] font-bold text-[var(--text-secondary)] uppercase mb-1.5">{t('bankName')}</label>
-                <input 
-                  type="text" 
-                  value={bank.bank_name}
-                  onChange={e => setBank({...bank, bank_name: e.target.value})}
-                  className="w-full px-4 py-2.5 rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] focus:bg-[var(--bg-primary)] focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-[var(--text-primary)]"
-                  placeholder="e.g. Bank of America"
-                />
-              </div>
-              <div>
-                <label className="block text-[10px] font-bold text-[var(--text-secondary)] uppercase mb-1.5">{t('displayName')}</label>
-                <input 
-                  type="text" 
-                  value={bank.name}
-                  onChange={e => setBank({...bank, name: e.target.value})}
-                  className="w-full px-4 py-2.5 rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] focus:bg-[var(--bg-primary)] focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-[var(--text-primary)]"
-                  placeholder="e.g. BoA"
-                />
-              </div>
-              <div>
-                <label className="block text-[10px] font-bold text-[var(--text-secondary)] uppercase mb-1.5">{t('owner')}</label>
-                <select 
-                  value={bank.owner_id}
-                  onChange={e => setBank({...bank, owner_id: parseInt(e.target.value)})}
-                  className="w-full px-4 py-2.5 rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] focus:bg-[var(--bg-primary)] focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-[var(--text-primary)]"
+          <div className="card p-6 rounded-2xl shadow-sm relative overflow-hidden">
+            {!isEditingBank && (
+              <div 
+                className="absolute top-0 left-0 w-full h-2" 
+                style={{ backgroundColor: bank.logo_color || '#3b82f6' }} 
+              />
+            )}
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xs font-bold uppercase tracking-widest text-[var(--text-secondary)] flex items-center gap-2">
+                <Landmark size={14} className="text-blue-500" />
+                {t('bankInformation')}
+              </h3>
+              {!isEditingBank && (
+                <button 
+                  onClick={() => setIsEditingBank(true)}
+                  className="p-1.5 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-all"
                 >
-                  {owners.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="block text-[10px] font-bold text-[var(--text-secondary)] uppercase mb-1.5">{t('country')}</label>
-                <select 
-                  value={bank.country}
-                  onChange={e => setBank({...bank, country: e.target.value})}
-                  className="w-full px-4 py-2.5 rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] focus:bg-[var(--bg-primary)] focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-[var(--text-primary)]"
-                >
-                  {countries.map(c => <option key={c} value={c}>{c}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="block text-[10px] font-bold text-[var(--text-secondary)] uppercase mb-1.5">{t('logoColor')}</label>
-                <div className="flex items-center gap-3">
+                  <Edit2 size={16} />
+                </button>
+              )}
+            </div>
+            
+            {isEditingBank ? (
+              <div className="space-y-5">
+                <div>
+                  <label className="block text-[10px] font-bold text-[var(--text-secondary)] uppercase mb-1.5">{t('bankName')}</label>
                   <input 
-                    type="color" 
-                    value={bank.logo_color}
-                    onChange={e => setBank({...bank, logo_color: e.target.value})}
-                    className="w-12 h-12 rounded-xl border-0 p-0 cursor-pointer overflow-hidden"
+                    type="text" 
+                    value={bank.bank_name}
+                    onChange={e => setBank({...bank, bank_name: e.target.value})}
+                    className="w-full px-4 py-2.5 rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] focus:bg-[var(--bg-primary)] focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-[var(--text-primary)]"
+                    placeholder="e.g. Bank of America"
                   />
-                  <span className="text-sm font-mono text-[var(--text-secondary)] uppercase">{bank.logo_color}</span>
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold text-[var(--text-secondary)] uppercase mb-1.5">{t('displayName')}</label>
+                  <input 
+                    type="text" 
+                    value={bank.name}
+                    onChange={e => setBank({...bank, name: e.target.value})}
+                    className="w-full px-4 py-2.5 rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] focus:bg-[var(--bg-primary)] focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-[var(--text-primary)]"
+                    placeholder="e.g. BoA"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold text-[var(--text-secondary)] uppercase mb-1.5">{t('owner')}</label>
+                  <select 
+                    value={bank.owner_id}
+                    onChange={e => setBank({...bank, owner_id: parseInt(e.target.value)})}
+                    className="w-full px-4 py-2.5 rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] focus:bg-[var(--bg-primary)] focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-[var(--text-primary)]"
+                  >
+                    {owners.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold text-[var(--text-secondary)] uppercase mb-1.5">{t('country')}</label>
+                  <select 
+                    value={bank.country}
+                    onChange={e => setBank({...bank, country: e.target.value})}
+                    className="w-full px-4 py-2.5 rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] focus:bg-[var(--bg-primary)] focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-[var(--text-primary)]"
+                  >
+                    {countries.map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold text-[var(--text-secondary)] uppercase mb-1.5">{t('logoColor')}</label>
+                  <div className="flex items-center gap-3">
+                    <input 
+                      type="color" 
+                      value={bank.logo_color}
+                      onChange={e => setBank({...bank, logo_color: e.target.value})}
+                      className="w-12 h-12 rounded-xl border-0 p-0 cursor-pointer overflow-hidden"
+                    />
+                    <span className="text-sm font-mono text-[var(--text-secondary)] uppercase">{bank.logo_color}</span>
+                  </div>
+                </div>
+                <div className="pt-2 flex justify-end">
+                  <button 
+                    onClick={() => setIsEditingBank(false)}
+                    className="px-4 py-2 text-sm font-bold bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400 rounded-xl hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors"
+                  >
+                    Done
+                  </button>
                 </div>
               </div>
-            </div>
+            ) : (
+              <div className="space-y-6">
+                <div className="flex items-center gap-4">
+                  <div 
+                    className="w-12 h-12 rounded-xl flex items-center justify-center text-white shadow-sm"
+                    style={{ backgroundColor: bank.logo_color || '#3b82f6' }}
+                  >
+                    <Landmark size={24} />
+                  </div>
+                  <div>
+                    <h4 className="text-xl font-bold text-[var(--text-primary)]">{bank.bank_name || 'Unnamed Bank'}</h4>
+                    <p className="text-sm text-[var(--text-secondary)]">{bank.name}</p>
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4 pt-4 border-t border-[var(--border-color)]">
+                  <div>
+                    <p className="text-[10px] font-bold text-[var(--text-secondary)] uppercase mb-1">{t('owner')}</p>
+                    <p className="text-sm font-medium text-[var(--text-primary)]">
+                      {owners.find(o => o.id === bank.owner_id)?.name || bank.owner_name || 'Unknown'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold text-[var(--text-secondary)] uppercase mb-1">{t('country')}</p>
+                    <p className="text-sm font-medium text-[var(--text-primary)]">
+                      {bank.country || 'Not specified'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
@@ -303,7 +362,7 @@ const AccountDetail: React.FC<AccountDetailProps> = ({ accountId: bankId, onBack
             </div>
 
             <div className="space-y-3">
-              {bank.accounts?.map(acc => (
+              {(showAllAccounts ? bank.accounts : bank.accounts?.slice(0, 2))?.map(acc => (
                 <div 
                   key={acc.id}
                   onClick={() => setSelectedAccountId(acc.id)}
@@ -340,6 +399,29 @@ const AccountDetail: React.FC<AccountDetailProps> = ({ accountId: bankId, onBack
                   </div>
                 </div>
               ))}
+
+              {!showAllAccounts && bank.accounts && bank.accounts.length > 2 && (
+                <div className="pt-2">
+                  <button 
+                    onClick={() => setShowAllAccounts(true)}
+                    className="flex items-center justify-center gap-2 w-full py-3 text-sm font-bold text-blue-600 hover:text-blue-700 bg-blue-50/50 hover:bg-blue-50 dark:bg-blue-900/10 dark:hover:bg-blue-900/20 border border-blue-100 dark:border-blue-800/30 rounded-xl transition-all"
+                  >
+                    {language === 'zh' ? `展开${bank.accounts.length - 2}个账户` : `Show ${bank.accounts.length - 2} more accounts`}
+                    <ChevronDown size={16} />
+                  </button>
+                </div>
+              )}
+              {showAllAccounts && bank.accounts && bank.accounts.length > 2 && (
+                <div className="pt-2">
+                  <button 
+                    onClick={() => setShowAllAccounts(false)}
+                    className="flex items-center justify-center gap-2 w-full py-3 text-sm font-bold text-blue-600 hover:text-blue-700 bg-blue-50/50 hover:bg-blue-50 dark:bg-blue-900/10 dark:hover:bg-blue-900/20 border border-blue-100 dark:border-blue-800/30 rounded-xl transition-all"
+                  >
+                    {language === 'zh' ? '收起账户' : 'Show less'}
+                    <ChevronUp size={16} />
+                  </button>
+                </div>
+              )}
 
               {(!bank.accounts || bank.accounts.length === 0) && (
                 <div className="text-center py-8 text-[var(--text-secondary)]">
@@ -557,24 +639,26 @@ const AccountDetail: React.FC<AccountDetailProps> = ({ accountId: bankId, onBack
                               {new Date(log.recorded_at).toLocaleDateString(language === 'zh' ? 'zh-CN' : 'en-US', { dateStyle: 'long' })}
                             </p>
                             <div className={cn(
-                              "p-5 rounded-2xl border transition-all group-hover:shadow-md",
+                              "p-4 rounded-2xl border transition-all group-hover:shadow-md",
                               realIdx === 0 ? "bg-blue-50/30 dark:bg-blue-900/10 border-blue-100 dark:border-blue-800/30" : "bg-[var(--bg-primary)] border-[var(--border-color)]"
                             )}>
                               <div className="flex items-center justify-between">
-                                <div>
-                                  <p className="text-xl font-mono font-bold text-[var(--text-primary)]">
-                                    {log.currency} {log.balance.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                                  </p>
-                                  {diffString && (
-                                    <p className={cn(
-                                      "text-xs font-bold mt-1",
-                                      isPositive ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"
-                                    )}>
-                                      {diffString}
+                                <div className="flex items-center gap-6">
+                                  <div>
+                                    <p className="text-xl font-mono font-bold text-[var(--text-primary)]">
+                                      {log.currency} {log.balance.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                     </p>
-                                  )}
+                                    {diffString && (
+                                      <p className={cn(
+                                        "text-xs font-bold mt-1",
+                                        isPositive ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"
+                                      )}>
+                                        {diffString}
+                                      </p>
+                                    )}
+                                  </div>
                                   {log.comment && (
-                                    <div className="mt-3">
+                                    <div className="hidden md:block border-l border-[var(--border-color)] pl-6">
                                       <p className="text-xs text-[var(--text-secondary)] italic bg-[var(--bg-secondary)] px-3 py-2 rounded-lg border border-[var(--border-color)] inline-block">
                                         "{log.comment}"
                                       </p>
@@ -596,6 +680,14 @@ const AccountDetail: React.FC<AccountDetailProps> = ({ accountId: bankId, onBack
                                   </button>
                                 </div>
                               </div>
+                              {/* Mobile comment view */}
+                              {log.comment && (
+                                <div className="mt-3 md:hidden">
+                                  <p className="text-xs text-[var(--text-secondary)] italic bg-[var(--bg-secondary)] px-3 py-2 rounded-lg border border-[var(--border-color)] inline-block">
+                                    "{log.comment}"
+                                  </p>
+                                </div>
+                              )}
                             </div>
                           </div>
                         </div>

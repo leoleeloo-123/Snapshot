@@ -23,19 +23,45 @@ const DataManagement: React.FC = () => {
       const accounts = JSON.parse(localStorage.getItem('accounts') || '[]');
       const logs = JSON.parse(localStorage.getItem('logs') || '[]');
 
+      // Format dates for Excel (MM/DD/YYYY)
+      const formatExcelDate = (isoString: string) => {
+        if (!isoString) return '';
+        const date = new Date(isoString);
+        if (isNaN(date.getTime())) return isoString;
+        const mm = String(date.getMonth() + 1).padStart(2, '0');
+        const dd = String(date.getDate()).padStart(2, '0');
+        const yyyy = date.getFullYear();
+        return `${mm}/${dd}/${yyyy}`;
+      };
+
+      const formattedBanks = banks.map((bank: any) => ({
+        ...bank,
+        last_updated: formatExcelDate(bank.last_updated)
+      }));
+
+      const formattedLogs = logs.map((log: any) => ({
+        ...log,
+        recorded_at: formatExcelDate(log.recorded_at)
+      }));
+
+      const formattedFxRates = fxRates.map((rate: any) => ({
+        ...rate,
+        updated_at: formatExcelDate(rate.updated_at)
+      }));
+
       const wb = XLSX.utils.book_new();
       
       // Owners Sheet
       XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(owners), "Owners");
       
       // Banks Sheet
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(banks), "Banks");
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(formattedBanks), "Banks");
 
       // Accounts Sheet
       XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(accounts), "Accounts");
       
       // Logs Sheet
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(logs), "BalanceLogs");
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(formattedLogs), "BalanceLogs");
 
       // Config Sheet
       const configRows = [
@@ -45,7 +71,7 @@ const DataManagement: React.FC = () => {
       XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(configRows), "ConfigOptions");
 
       // FX Rates Sheet
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(fxRates), "FXRates");
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(formattedFxRates), "FXRates");
 
       XLSX.writeFile(wb, `AssetSnapshot_Export_${new Date().toISOString().split('T')[0]}.xlsx`);
       setStatus({ type: 'success', message: 'Data exported successfully!' });
@@ -65,7 +91,7 @@ const DataManagement: React.FC = () => {
     reader.onload = async (evt) => {
       try {
         const bstr = evt.target?.result;
-        const wb = XLSX.read(bstr, { type: 'binary' });
+        const wb = XLSX.read(bstr, { type: 'binary', cellDates: true });
         
         const importedOwners = XLSX.utils.sheet_to_json(wb.Sheets["Owners"] || wb.Sheets[wb.SheetNames[0]]);
         const importedBanks = XLSX.utils.sheet_to_json(wb.Sheets["Banks"] || wb.Sheets[wb.SheetNames[1]]);
@@ -74,13 +100,37 @@ const DataManagement: React.FC = () => {
         const config = XLSX.utils.sheet_to_json(wb.Sheets["ConfigOptions"] || wb.Sheets[wb.SheetNames[4]]) as any[];
         const importedFxRates = XLSX.utils.sheet_to_json(wb.Sheets["FXRates"] || wb.Sheets[wb.SheetNames[5]]) as any[];
 
+        const parseDate = (val: any) => {
+          if (!val) return new Date().toISOString();
+          if (val instanceof Date) {
+            // Excel dates are parsed as UTC. To avoid timezone shift,
+            // we construct the ISO string manually.
+            const yyyy = val.getUTCFullYear();
+            const mm = String(val.getUTCMonth() + 1).padStart(2, '0');
+            const dd = String(val.getUTCDate()).padStart(2, '0');
+            return `${yyyy}-${mm}-${dd}T00:00:00.000Z`;
+          }
+          const d = new Date(val);
+          if (!isNaN(d.getTime())) {
+            const yyyy = d.getFullYear();
+            const mm = String(d.getMonth() + 1).padStart(2, '0');
+            const dd = String(d.getDate()).padStart(2, '0');
+            return `${yyyy}-${mm}-${dd}T00:00:00.000Z`;
+          }
+          return new Date().toISOString();
+        };
+
+        const processedBanks = importedBanks.map((b: any) => ({ ...b, last_updated: parseDate(b.last_updated) }));
+        const processedLogs = importedLogs.map((l: any) => ({ ...l, recorded_at: parseDate(l.recorded_at) }));
+        const processedFxRates = importedFxRates.map((r: any) => ({ ...r, updated_at: parseDate(r.updated_at) }));
+
         setPreviewData({
           owners: importedOwners || [],
-          banks: importedBanks || [],
+          banks: processedBanks || [],
           accounts: importedAccounts || [],
-          logs: importedLogs || [],
+          logs: processedLogs || [],
           config: config || [],
-          fxRates: importedFxRates || []
+          fxRates: processedFxRates || []
         });
         
         setViewMode('preview_import');
