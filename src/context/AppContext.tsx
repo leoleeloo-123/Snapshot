@@ -110,6 +110,8 @@ const translations = {
     editAccount: 'Edit Account',
     dashboardDesc: 'Overview of your total assets and distribution.',
     settingsDesc: 'Personalize your experience and manage users.',
+    filterUsers: 'Filter Users',
+    allUsers: 'All Users',
   },
   zh: {
     dashboard: '仪表盘',
@@ -180,6 +182,8 @@ const translations = {
     editAccount: '编辑账户',
     dashboardDesc: '您的总资产和分布概览。',
     settingsDesc: '个性化您的体验并管理用户。',
+    filterUsers: '筛选用户',
+    allUsers: '所有用户',
   }
 };
 

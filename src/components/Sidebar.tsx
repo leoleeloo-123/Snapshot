@@ -1,5 +1,5 @@
-import React from 'react';
-import { LayoutDashboard, Users, Database, Settings, ChevronRight, Globe, User } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { LayoutDashboard, Users, Database, Settings, ChevronRight, Globe, User, ChevronDown } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -15,6 +15,8 @@ interface SidebarProps {
 
 const Sidebar: React.FC<SidebarProps> = ({ activeModule, setActiveModule }) => {
   const { t, displayCurrency, setDisplayCurrency, currencies, owners, selectedOwners, setSelectedOwners } = useAppContext();
+  const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const menuItems = [
     { id: 'dashboard', label: t('dashboard'), icon: LayoutDashboard },
@@ -30,6 +32,19 @@ const Sidebar: React.FC<SidebarProps> = ({ activeModule, setActiveModule }) => {
       setSelectedOwners([...selectedOwners, ownerId]);
     }
   };
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsUserDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   return (
     <div className="w-64 h-screen border-r border-[var(--border-color)] bg-[var(--bg-secondary)] flex flex-col">
@@ -68,7 +83,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeModule, setActiveModule }) => {
       
       <div className="p-4 border-t border-[var(--border-color)] space-y-4">
         {/* Global Filters */}
-        <div className="space-y-3">
+        <div className="space-y-4">
           <div className="flex items-center justify-between px-2">
             <span className="text-xs font-bold text-[var(--text-secondary)] uppercase flex items-center gap-1.5">
               <Globe size={12} /> {t('displayCurrency')}
@@ -82,40 +97,47 @@ const Sidebar: React.FC<SidebarProps> = ({ activeModule, setActiveModule }) => {
             </select>
           </div>
 
-          <div className="px-2">
+          <div className="px-2 relative" ref={dropdownRef}>
             <span className="text-xs font-bold text-[var(--text-secondary)] uppercase flex items-center gap-1.5 mb-2">
-              <User size={12} /> Filter Users
+              <User size={12} /> {t('filterUsers')}
             </span>
-            <div className="space-y-1">
-              <label className="flex items-center gap-2 text-sm text-[var(--text-primary)] cursor-pointer hover:bg-[var(--bg-primary)] p-1.5 rounded-lg transition-colors">
-                <input 
-                  type="checkbox" 
-                  checked={selectedOwners.length === 0}
-                  onChange={() => setSelectedOwners([])}
-                  className="rounded border-[var(--border-color)] text-blue-600 focus:ring-blue-500"
-                />
-                <span className={selectedOwners.length === 0 ? "font-bold" : ""}>All Users</span>
-              </label>
-              {owners.map(owner => (
-                <label key={owner.id} className="flex items-center gap-2 text-sm text-[var(--text-primary)] cursor-pointer hover:bg-[var(--bg-primary)] p-1.5 rounded-lg transition-colors">
+            
+            <button 
+              onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
+              className="w-full flex items-center justify-between p-2 rounded-lg border border-[var(--border-color)] bg-[var(--bg-primary)] text-sm hover:border-blue-500 transition-colors"
+            >
+              <span className="truncate">
+                {selectedOwners.length === 0 
+                  ? t('allUsers') 
+                  : selectedOwners.map(id => owners.find(o => o.id === id)?.name).join(', ')}
+              </span>
+              <ChevronDown size={14} className={cn("text-[var(--text-secondary)] transition-transform", isUserDropdownOpen && "rotate-180")} />
+            </button>
+
+            {isUserDropdownOpen && (
+              <div className="absolute bottom-full left-2 right-2 mb-2 bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-xl shadow-lg overflow-hidden z-50 py-1">
+                <label className="flex items-center gap-2 px-3 py-2 text-sm text-[var(--text-primary)] cursor-pointer hover:bg-[var(--bg-secondary)] transition-colors">
                   <input 
                     type="checkbox" 
-                    checked={selectedOwners.includes(owner.id)}
-                    onChange={() => handleOwnerToggle(owner.id)}
+                    checked={selectedOwners.length === 0}
+                    onChange={() => setSelectedOwners([])}
                     className="rounded border-[var(--border-color)] text-blue-600 focus:ring-blue-500"
                   />
-                  <span className={selectedOwners.includes(owner.id) ? "font-bold" : ""}>{owner.name}</span>
+                  <span className={selectedOwners.length === 0 ? "font-bold" : ""}>{t('allUsers')}</span>
                 </label>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <div className="p-3 rounded-xl bg-[var(--bg-primary)] flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-500" />
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium truncate">Admin User</p>
-            <p className="text-xs text-[var(--text-secondary)] truncate">v1.0.0 MVP</p>
+                {owners.map(owner => (
+                  <label key={owner.id} className="flex items-center gap-2 px-3 py-2 text-sm text-[var(--text-primary)] cursor-pointer hover:bg-[var(--bg-secondary)] transition-colors">
+                    <input 
+                      type="checkbox" 
+                      checked={selectedOwners.includes(owner.id)}
+                      onChange={() => handleOwnerToggle(owner.id)}
+                      className="rounded border-[var(--border-color)] text-blue-600 focus:ring-blue-500"
+                    />
+                    <span className={selectedOwners.includes(owner.id) ? "font-bold" : ""}>{owner.name}</span>
+                  </label>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>
