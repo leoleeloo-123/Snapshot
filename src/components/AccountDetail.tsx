@@ -144,8 +144,6 @@ const AccountDetail: React.FC<AccountDetailProps> = ({ accountId: bankId, onBack
     if (updated) setBank(updated);
   };
 
-  if (loading) return <div className="p-8 text-center">Loading...</div>;
-
   const selectedAccount = bank.accounts?.find(a => a.id === selectedAccountId);
   
   const totalBalance = bank.accounts?.reduce((sum, acc) => {
