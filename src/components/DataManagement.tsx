@@ -91,7 +91,10 @@ const DataManagement: React.FC = () => {
       // FX Rates Sheet
       XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(formattedFxRates), "FXRates");
 
-      XLSX.writeFile(wb, `AssetSnapshot_Export_${new Date().toISOString().split('T')[0]}.xlsx`);
+      const date = new Date();
+      const dateString = date.toISOString().split('T')[0];
+      const timeString = date.toTimeString().split(' ')[0].replace(/:/g, '').substring(0, 4);
+      XLSX.writeFile(wb, `AssetSnapshot_Export_${dateString}_${timeString}.xlsx`);
       setStatus({ type: 'success', message: 'Data exported successfully!' });
       setTimeout(() => setStatus(null), 3000);
     } catch (e) {

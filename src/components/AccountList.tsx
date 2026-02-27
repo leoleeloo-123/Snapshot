@@ -72,30 +72,29 @@ const AccountList: React.FC<AccountListProps> = ({ onSelectAccount }) => {
               onClick={() => onSelectAccount(bank.id)}
               className="card p-6 rounded-2xl hover:shadow-xl hover:border-blue-500/50 transition-all cursor-pointer group relative overflow-hidden"
             >
-              <div className="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                <ArrowUpRight size={20} className="text-blue-500" />
+              <div className="absolute top-4 right-4 flex items-center gap-2">
+                <div className="min-w-[32px] h-8 px-2 rounded-full bg-[var(--bg-secondary)] border border-[var(--border-color)] flex items-center justify-center text-xs font-bold text-[var(--text-secondary)]">
+                  {bank.owner_name?.substring(0, 2).toUpperCase()}
+                </div>
+                <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                  <ArrowUpRight size={20} className="text-blue-500" />
+                </div>
               </div>
               
-              <div className="flex items-start gap-4">
+              <div className="flex items-center gap-4">
                 <div 
-                  className="w-12 h-12 rounded-xl flex items-center justify-center text-white shadow-inner shrink-0"
+                  className="w-14 h-14 rounded-xl flex items-center justify-center text-white shadow-inner shrink-0"
                   style={{ backgroundColor: bank.logo_color || '#3b82f6' }}
                 >
-                  <Icon size={24} />
+                  <Icon size={28} />
                 </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-medium text-[var(--text-secondary)]">
-                      {bank.owner_name}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2 mt-1">
-                    <h3 className="text-lg font-bold truncate">{bank.name}</h3>
-                    <span className="shrink-0 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-full bg-[var(--bg-secondary)] border border-[var(--border-color)] text-[var(--text-secondary)]">
+                <div className="flex-1 min-w-0 pr-16">
+                  <div className="flex items-center gap-3">
+                    <h3 className="text-2xl font-bold truncate leading-none">{bank.name}</h3>
+                    <span className="shrink-0 px-3 py-1 text-xs font-bold uppercase tracking-wider rounded-full bg-[var(--bg-secondary)] border border-[var(--border-color)] text-[var(--text-secondary)]">
                       {t((bank.institution_type || 'Bank').toLowerCase())}
                     </span>
                   </div>
-                  <p className="text-sm text-[var(--text-secondary)] truncate">{bank.bank_name}</p>
                 </div>
               </div>
 
