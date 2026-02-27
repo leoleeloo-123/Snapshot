@@ -39,6 +39,34 @@ export interface BalanceLog {
   recorded_at: string;
 }
 
+export interface Asset {
+  id: number;
+  owner_id: number;
+  owner_name?: string;
+  name: string;
+  asset_type: string;
+  value: number;
+  currency: string;
+  purchase_price?: number;
+  purchase_date?: string;
+  country?: string;
+  notes?: string;
+  logo_color?: string;
+  last_updated?: string;
+  logs?: AssetLog[];
+  log_count?: number;
+}
+
+export interface AssetLog {
+  id: number;
+  asset_id: number;
+  type: string; // e.g., 'Valuation', 'Dividend', 'Maintenance'
+  amount: number;
+  currency: string;
+  comment?: string;
+  recorded_at: string;
+}
+
 export interface FXRate {
   base_currency: string;
   target_currency: string;

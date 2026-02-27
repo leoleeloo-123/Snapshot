@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { LayoutDashboard, Users, Database, Settings, ChevronRight, Globe, User, ChevronDown } from 'lucide-react';
+import { LayoutDashboard, Users, Database, Settings, ChevronRight, Globe, User, ChevronDown, Briefcase } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -21,6 +21,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeModule, setActiveModule }) => {
   const menuItems = [
     { id: 'dashboard', label: t('dashboard'), icon: LayoutDashboard },
     { id: 'accounts', label: t('accounts'), icon: Users },
+    { id: 'assets', label: t('assets'), icon: Briefcase },
     { id: 'data', label: t('dataManagement'), icon: Database },
     { id: 'settings', label: t('settings'), icon: Settings },
   ];

@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { Theme, Language, Owner, FXRate, Bank, Account, BalanceLog } from '../types';
+import { Theme, Language, Owner, FXRate, Bank, Account, BalanceLog, Asset, AssetLog } from '../types';
 
 interface AppContextType {
   theme: Theme;
@@ -21,6 +21,14 @@ interface AppContextType {
   addLog: (log: Omit<BalanceLog, 'id'>) => void;
   updateLog: (id: number, log: Partial<BalanceLog>) => void;
   deleteLog: (id: number) => void;
+  assets: Asset[];
+  getAsset: (id: number) => Asset | undefined;
+  addAsset: (asset: Omit<Asset, 'id' | 'logs' | 'log_count'>) => number;
+  updateAsset: (id: number, asset: Partial<Asset>) => void;
+  deleteAsset: (id: number) => void;
+  addAssetLog: (log: Omit<AssetLog, 'id'>) => void;
+  updateAssetLog: (id: number, log: Partial<AssetLog>) => void;
+  deleteAssetLog: (id: number) => void;
   countries: string[];
   addCountry: (name: string) => void;
   deleteCountry: (name: string) => void;
@@ -44,9 +52,11 @@ const translations = {
   en: {
     dashboard: 'Dashboard',
     accounts: 'Accounts',
+    assets: 'Assets',
     dataManagement: 'Data Management',
     settings: 'Settings',
     addAccount: 'Add Account',
+    addAsset: 'Add Asset',
     owner: 'Owner',
     name: 'Name',
     type: 'Type',
@@ -121,13 +131,30 @@ const translations = {
     investmentInformation: 'Investment Information',
     otherInformation: 'Other Information',
     institutionName: 'Institution Name',
+    assetInformation: 'Asset Information',
+    assetDetails: 'Asset Details',
+    assetType: 'Asset Type',
+    purchasePrice: 'Purchase Price',
+    purchaseDate: 'Purchase Date',
+    currentValue: 'Current Value',
+    realEstate: 'Real Estate',
+    vehicle: 'Vehicle',
+    equity: 'Equity',
+    newAssetSetup: 'New Asset Setup',
+    editAsset: 'Edit Asset',
+    valuation: 'Valuation',
+    dividend: 'Dividend',
+    maintenance: 'Maintenance',
+    assetValue: 'Asset Value',
   },
   zh: {
     dashboard: '仪表盘',
     accounts: '账户',
+    assets: '资产',
     dataManagement: '数据管理',
     settings: '设置',
     addAccount: '添加账户',
+    addAsset: '添加资产',
     owner: '所有人',
     name: '名称',
     type: '类型',
@@ -202,6 +229,21 @@ const translations = {
     investmentInformation: '投资信息',
     otherInformation: '其他信息',
     institutionName: '机构名称',
+    assetInformation: '资产信息',
+    assetDetails: '资产详情',
+    assetType: '资产类型',
+    purchasePrice: '购买价格',
+    purchaseDate: '购买日期',
+    currentValue: '当前估值',
+    realEstate: '房产',
+    vehicle: '车辆',
+    equity: '股权',
+    newAssetSetup: '新资产设置',
+    editAsset: '编辑资产',
+    valuation: '估值',
+    dividend: '分红',
+    maintenance: '维护',
+    assetValue: '资产价值',
   }
 };
 
@@ -216,6 +258,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [banks, setBanks] = useState<Bank[]>(() => JSON.parse(localStorage.getItem('banks') || '[]'));
   const [accounts, setAccounts] = useState<Account[]>(() => JSON.parse(localStorage.getItem('accounts') || '[]'));
   const [logs, setLogs] = useState<BalanceLog[]>(() => JSON.parse(localStorage.getItem('logs') || '[]'));
+  const [assets, setAssets] = useState<Asset[]>(() => JSON.parse(localStorage.getItem('assets') || '[]'));
+  const [assetLogs, setAssetLogs] = useState<AssetLog[]>(() => JSON.parse(localStorage.getItem('assetLogs') || '[]'));
   const [countries, setCountries] = useState<string[]>(() => JSON.parse(localStorage.getItem('countries') || '[]'));
   const [currencies, setCurrencies] = useState<string[]>(() => JSON.parse(localStorage.getItem('currencies') || '[]'));
   const [fxRates, setFXRates] = useState<FXRate[]>(() => JSON.parse(localStorage.getItem('fxRates') || '[]'));
@@ -229,6 +273,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   useEffect(() => { localStorage.setItem('banks', JSON.stringify(banks)); }, [banks]);
   useEffect(() => { localStorage.setItem('accounts', JSON.stringify(accounts)); }, [accounts]);
   useEffect(() => { localStorage.setItem('logs', JSON.stringify(logs)); }, [logs]);
+  useEffect(() => { localStorage.setItem('assets', JSON.stringify(assets)); }, [assets]);
+  useEffect(() => { localStorage.setItem('assetLogs', JSON.stringify(assetLogs)); }, [assetLogs]);
   useEffect(() => { localStorage.setItem('countries', JSON.stringify(countries)); }, [countries]);
   useEffect(() => { localStorage.setItem('currencies', JSON.stringify(currencies)); }, [currencies]);
   useEffect(() => { localStorage.setItem('fxRates', JSON.stringify(fxRates)); }, [fxRates]);
@@ -349,6 +395,39 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
+  // Asset CRUD
+  const addAsset = (asset: Omit<Asset, 'id' | 'logs' | 'log_count'>) => {
+    const id = Date.now();
+    setAssets(prev => [...prev, { ...asset, id, last_updated: new Date().toISOString() }]);
+    return id;
+  };
+
+  const updateAsset = (id: number, asset: Partial<Asset>) => {
+    setAssets(prev => prev.map(a => a.id === id ? { ...a, ...asset, last_updated: new Date().toISOString() } : a));
+  };
+
+  const deleteAsset = (id: number) => {
+    setAssets(prev => prev.filter(a => a.id !== id));
+    setAssetLogs(prev => prev.filter(l => l.asset_id !== id));
+  };
+
+  const addAssetLog = (log: Omit<AssetLog, 'id'>) => {
+    setAssetLogs(prev => [...prev, { ...log, id: Date.now() }]);
+    updateAsset(log.asset_id, {});
+  };
+
+  const updateAssetLog = (id: number, log: Partial<AssetLog>) => {
+    setAssetLogs(prev => prev.map(l => l.id === id ? { ...l, ...log } : l));
+    const existing = assetLogs.find(l => l.id === id);
+    if (existing) updateAsset(existing.asset_id, {});
+  };
+
+  const deleteAssetLog = (id: number) => {
+    const existing = assetLogs.find(l => l.id === id);
+    setAssetLogs(prev => prev.filter(l => l.id !== id));
+    if (existing) updateAsset(existing.asset_id, {});
+  };
+
   const addCountry = (name: string) => setCountries(prev => Array.from(new Set([...prev, name])));
   const deleteCountry = (name: string) => setCountries(prev => prev.filter(c => c !== name));
   const addCurrency = (name: string) => setCurrencies(prev => Array.from(new Set([...prev, name])));
@@ -366,6 +445,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (data.banks) setBanks(data.banks);
     if (data.accounts) setAccounts(data.accounts);
     if (data.logs) setLogs(data.logs);
+    if (data.assets) setAssets(data.assets);
+    if (data.assetLogs) setAssetLogs(data.assetLogs);
     if (data.countries) setCountries(data.countries);
     if (data.currencies) setCurrencies(data.currencies);
     if (data.fxRates) setFXRates(data.fxRates);
@@ -405,6 +486,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
   };
 
+  const getAsset = (id: number) => {
+    const asset = assets.find(a => a.id === id);
+    if (!asset) return undefined;
+    
+    const owner = owners.find(o => o.id === asset.owner_id);
+    const logs = assetLogs.filter(l => l.asset_id === id).sort((a, b) => new Date(b.recorded_at).getTime() - new Date(a.recorded_at).getTime());
+
+    return {
+      ...asset,
+      owner_name: owner?.name,
+      logs,
+      log_count: logs.length
+    };
+  };
+
   // Aggregated Banks for List
   const aggregatedBanks = banks.map(b => {
     const owner = owners.find(o => o.id === b.owner_id);
@@ -424,6 +520,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
   });
 
+  const aggregatedAssets = assets.map(a => {
+    const owner = owners.find(o => o.id === a.owner_id);
+    const logs = assetLogs.filter(l => l.asset_id === a.id);
+    return {
+      ...a,
+      owner_name: owner?.name,
+      log_count: logs.length
+    };
+  });
+
   const t = (key: string) => {
     return translations[language][key as keyof typeof translations['en']] || key;
   };
@@ -436,6 +542,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       banks: aggregatedBanks, getBank, addBank, updateBank, deleteBank,
       addSubAccount, updateSubAccount, deleteSubAccount,
       addLog, updateLog, deleteLog,
+      assets: aggregatedAssets, getAsset, addAsset, updateAsset, deleteAsset,
+      addAssetLog, updateAssetLog, deleteAssetLog,
       countries, addCountry, deleteCountry,
       currencies, addCurrency, deleteCurrency,
       fxRates, updateFXRates,

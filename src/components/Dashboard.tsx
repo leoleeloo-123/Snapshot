@@ -5,7 +5,7 @@ import { Wallet, TrendingUp, Users, LineChart as LineChartIcon, Filter } from 'l
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 
 const Dashboard: React.FC = () => {
-  const { t, owners, fxRates, displayCurrency, banks, selectedOwners, language, getBank } = useAppContext();
+  const { t, owners, fxRates, displayCurrency, banks, assets, selectedOwners, language, getBank } = useAppContext();
 
   const [chartUserFilter, setChartUserFilter] = useState<number | 'all'>('all');
   const [chartBankFilter, setChartBankFilter] = useState<number | 'all'>('all');
@@ -22,9 +22,16 @@ const Dashboard: React.FC = () => {
     ? banks.filter(b => selectedOwners.includes(b.owner_id))
     : banks;
 
+  const filteredAssets = selectedOwners.length > 0
+    ? assets.filter(a => selectedOwners.includes(a.owner_id))
+    : assets;
+
   const totalAssets = filteredBanks.reduce((sum, bank) => {
     const balance = bank.total_balance || 0;
     return sum + convertToDisplay(balance, 'USD'); 
+  }, 0) + filteredAssets.reduce((sum, asset) => {
+    const balance = asset.value || 0;
+    return sum + convertToDisplay(balance, 'USD');
   }, 0);
 
   const filteredOwners = selectedOwners.length > 0
@@ -33,14 +40,22 @@ const Dashboard: React.FC = () => {
 
   const ownerData = filteredOwners.map(owner => {
     const ownerBanks = filteredBanks.filter(bank => bank.owner_id === owner.id);
-    const total = ownerBanks.reduce((sum, bank) => {
+    const ownerAssets = filteredAssets.filter(asset => asset.owner_id === owner.id);
+    
+    const bankTotal = ownerBanks.reduce((sum, bank) => {
       const balance = bank.total_balance || 0;
       return sum + convertToDisplay(balance, 'USD');
     }, 0);
+    
+    const assetTotal = ownerAssets.reduce((sum, asset) => {
+      const balance = asset.value || 0;
+      return sum + convertToDisplay(balance, 'USD');
+    }, 0);
+
     return {
       name: owner.name,
-      value: total,
-      count: ownerBanks.length
+      value: bankTotal + assetTotal,
+      count: ownerBanks.length + ownerAssets.length
     };
   }).filter(d => d.value > 0);
 

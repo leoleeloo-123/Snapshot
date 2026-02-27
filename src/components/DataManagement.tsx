@@ -10,10 +10,10 @@ function cn(...inputs: ClassValue[]) {
 }
 
 const DataManagement: React.FC = () => {
-  const { t, owners, banks, countries, currencies, fxRates, resetAllData, importAllData } = useAppContext();
+  const { t, owners, banks, assets, countries, currencies, fxRates, resetAllData, importAllData } = useAppContext();
   const [status, setStatus] = useState<{ type: 'success' | 'error' | 'loading', message: string } | null>(null);
   const [viewMode, setViewMode] = useState<'overview' | 'review_db' | 'preview_import'>('overview');
-  const [activeTab, setActiveTab] = useState<'owners' | 'banks' | 'accounts' | 'logs' | 'config' | 'fxRates'>('owners');
+  const [activeTab, setActiveTab] = useState<'owners' | 'banks' | 'accounts' | 'logs' | 'assets' | 'assetLogs' | 'config' | 'fxRates'>('owners');
   const [previewData, setPreviewData] = useState<any>(null);
 
   const handleExport = async () => {
@@ -22,6 +22,7 @@ const DataManagement: React.FC = () => {
       // Get all raw data from localStorage via context
       const accounts = JSON.parse(localStorage.getItem('accounts') || '[]');
       const logs = JSON.parse(localStorage.getItem('logs') || '[]');
+      const assetLogs = JSON.parse(localStorage.getItem('assetLogs') || '[]');
 
       // Format dates for Excel (MM/DD/YYYY)
       const formatExcelDate = (isoString: string) => {
@@ -39,7 +40,18 @@ const DataManagement: React.FC = () => {
         last_updated: formatExcelDate(bank.last_updated)
       }));
 
+      const formattedAssets = assets.map((asset: any) => ({
+        ...asset,
+        purchase_date: formatExcelDate(asset.purchase_date),
+        last_updated: formatExcelDate(asset.last_updated)
+      }));
+
       const formattedLogs = logs.map((log: any) => ({
+        ...log,
+        recorded_at: formatExcelDate(log.recorded_at)
+      }));
+
+      const formattedAssetLogs = assetLogs.map((log: any) => ({
         ...log,
         recorded_at: formatExcelDate(log.recorded_at)
       }));
@@ -62,6 +74,12 @@ const DataManagement: React.FC = () => {
       
       // Logs Sheet
       XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(formattedLogs), "BalanceLogs");
+
+      // Assets Sheet
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(formattedAssets), "Assets");
+
+      // Asset Logs Sheet
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(formattedAssetLogs), "AssetLogs");
 
       // Config Sheet
       const configRows = [
@@ -97,8 +115,16 @@ const DataManagement: React.FC = () => {
         const importedBanks = XLSX.utils.sheet_to_json(wb.Sheets["Institutions"] || wb.Sheets["Banks"] || wb.Sheets[wb.SheetNames[1]]);
         const importedAccounts = XLSX.utils.sheet_to_json(wb.Sheets["Accounts"] || wb.Sheets[wb.SheetNames[2]]);
         const importedLogs = XLSX.utils.sheet_to_json(wb.Sheets["BalanceLogs"] || wb.Sheets[wb.SheetNames[3]]);
-        const config = XLSX.utils.sheet_to_json(wb.Sheets["ConfigOptions"] || wb.Sheets[wb.SheetNames[4]]) as any[];
-        const importedFxRates = XLSX.utils.sheet_to_json(wb.Sheets["FXRates"] || wb.Sheets[wb.SheetNames[5]]) as any[];
+        
+        let sheetIndex = 4;
+        const importedAssets = wb.Sheets["Assets"] ? XLSX.utils.sheet_to_json(wb.Sheets["Assets"]) : [];
+        if (wb.Sheets["Assets"]) sheetIndex++;
+        
+        const importedAssetLogs = wb.Sheets["AssetLogs"] ? XLSX.utils.sheet_to_json(wb.Sheets["AssetLogs"]) : [];
+        if (wb.Sheets["AssetLogs"]) sheetIndex++;
+
+        const config = XLSX.utils.sheet_to_json(wb.Sheets["ConfigOptions"] || wb.Sheets[wb.SheetNames[sheetIndex]]) as any[];
+        const importedFxRates = XLSX.utils.sheet_to_json(wb.Sheets["FXRates"] || wb.Sheets[wb.SheetNames[sheetIndex + 1]]) as any[];
 
         const parseDate = (val: any) => {
           if (!val) return new Date().toISOString();
@@ -122,6 +148,8 @@ const DataManagement: React.FC = () => {
 
         const processedBanks = importedBanks.map((b: any) => ({ ...b, last_updated: parseDate(b.last_updated) }));
         const processedLogs = importedLogs.map((l: any) => ({ ...l, recorded_at: parseDate(l.recorded_at) }));
+        const processedAssets = importedAssets.map((a: any) => ({ ...a, purchase_date: parseDate(a.purchase_date), last_updated: parseDate(a.last_updated) }));
+        const processedAssetLogs = importedAssetLogs.map((l: any) => ({ ...l, recorded_at: parseDate(l.recorded_at) }));
         const processedFxRates = importedFxRates.map((r: any) => ({ ...r, updated_at: parseDate(r.updated_at) }));
 
         setPreviewData({
@@ -129,6 +157,8 @@ const DataManagement: React.FC = () => {
           banks: processedBanks || [],
           accounts: importedAccounts || [],
           logs: processedLogs || [],
+          assets: processedAssets || [],
+          assetLogs: processedAssetLogs || [],
           config: config || [],
           fxRates: processedFxRates || []
         });
@@ -156,6 +186,8 @@ const DataManagement: React.FC = () => {
         banks: previewData.banks,
         accounts: previewData.accounts,
         logs: previewData.logs,
+        assets: previewData.assets,
+        assetLogs: previewData.assetLogs,
         countries: countries.length > 0 ? countries : undefined,
         currencies: currencies.length > 0 ? currencies : undefined,
         fxRates: previewData.fxRates
@@ -181,6 +213,8 @@ const DataManagement: React.FC = () => {
       banks,
       accounts: JSON.parse(localStorage.getItem('accounts') || '[]'),
       logs: JSON.parse(localStorage.getItem('logs') || '[]'),
+      assets,
+      assetLogs: JSON.parse(localStorage.getItem('assetLogs') || '[]'),
       config: [
         ...countries.map((v: string) => ({ type: 'country', value: v })),
         ...currencies.map((v: string) => ({ type: 'currency', value: v }))
@@ -193,6 +227,8 @@ const DataManagement: React.FC = () => {
       case 'banks': return source.banks;
       case 'accounts': return source.accounts;
       case 'logs': return source.logs;
+      case 'assets': return source.assets;
+      case 'assetLogs': return source.assetLogs;
       case 'config': return source.config;
       case 'fxRates': return source.fxRates;
       default: return [];
@@ -317,6 +353,14 @@ const DataManagement: React.FC = () => {
                 <span className="text-[var(--text-secondary)] font-bold uppercase tracking-wider text-xs">Logs</span>
                 <span className="font-mono font-bold text-[var(--text-primary)] bg-[var(--bg-primary)] px-2 py-1 rounded border border-[var(--border-color)]">{JSON.parse(localStorage.getItem('logs') || '[]').length}</span>
               </div>
+              <div className="flex justify-between items-center text-sm p-3 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border-color)]">
+                <span className="text-[var(--text-secondary)] font-bold uppercase tracking-wider text-xs">Assets</span>
+                <span className="font-mono font-bold text-[var(--text-primary)] bg-[var(--bg-primary)] px-2 py-1 rounded border border-[var(--border-color)]">{assets.length}</span>
+              </div>
+              <div className="flex justify-between items-center text-sm p-3 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border-color)]">
+                <span className="text-[var(--text-secondary)] font-bold uppercase tracking-wider text-xs">Asset Logs</span>
+                <span className="font-mono font-bold text-[var(--text-primary)] bg-[var(--bg-primary)] px-2 py-1 rounded border border-[var(--border-color)]">{JSON.parse(localStorage.getItem('assetLogs') || '[]').length}</span>
+              </div>
             </div>
           </div>
           
@@ -341,6 +385,8 @@ const DataManagement: React.FC = () => {
               { id: 'banks', label: 'Banks', icon: '🏦' },
               { id: 'accounts', label: 'Accounts', icon: '💳' },
               { id: 'logs', label: 'Balance Logs', icon: '📈' },
+              { id: 'assets', label: 'Assets', icon: '💼' },
+              { id: 'assetLogs', label: 'Asset Logs', icon: '📋' },
               { id: 'config', label: 'Config', icon: '⚙️' },
               { id: 'fxRates', label: 'FX Rates', icon: '💱' }
             ].map(tab => (

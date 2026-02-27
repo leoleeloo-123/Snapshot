@@ -178,7 +178,7 @@ const AccountDetail: React.FC<AccountDetailProps> = ({ accountId: bankId, onBack
   return (
     <div className="min-h-screen bg-[var(--bg-primary)]">
       {/* Minimal Header - Aligned with content */}
-      <div className="max-w-[1600px] mx-auto px-8 py-6 flex items-center justify-between">
+      <div className="px-8 py-6 flex items-center justify-between">
         <div className="flex items-center gap-6">
           <button onClick={onBack} className="w-10 h-10 flex items-center justify-center bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-full hover:shadow-md transition-all text-[var(--text-primary)]">
             <ArrowLeft size={20} />
@@ -231,7 +231,7 @@ const AccountDetail: React.FC<AccountDetailProps> = ({ accountId: bankId, onBack
         </div>
       </div>
 
-      <div className="px-8 pb-12 max-w-[1600px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <div className="px-8 pb-12 grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Left Column (4/12) */}
         <div className="lg:col-span-4 space-y-6">
           {/* Status Summary Card */}
