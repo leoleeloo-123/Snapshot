@@ -5,7 +5,7 @@ import { Wallet, TrendingUp, Users, LineChart as LineChartIcon, Filter } from 'l
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 
 const Dashboard: React.FC = () => {
-  const { t, owners, fxRates, displayCurrency, banks, selectedOwners, language } = useAppContext();
+  const { t, owners, fxRates, displayCurrency, banks, selectedOwners, language, getBank } = useAppContext();
 
   const [chartUserFilter, setChartUserFilter] = useState<number | 'all'>('all');
   const [chartBankFilter, setChartBankFilter] = useState<number | 'all'>('all');
@@ -69,7 +69,11 @@ const Dashboard: React.FC = () => {
 
   const displayChartData = useMemo(() => {
     const allLogs: { date: string, bankId: number, accountId: number, balance: number, currency: string }[] = [];
-    chartBanks.forEach(bank => {
+    
+    // Fetch detailed bank data including accounts and logs
+    const detailedBanks = chartBanks.map(b => getBank(b.id)).filter(Boolean) as Bank[];
+
+    detailedBanks.forEach(bank => {
       bank.accounts?.forEach(acc => {
         acc.logs?.forEach(log => {
           allLogs.push({
@@ -101,7 +105,7 @@ const Dashboard: React.FC = () => {
       let sum = 0;
       const bankTotals: Record<string, number> = {};
       
-      chartBanks.forEach(bank => {
+      detailedBanks.forEach(bank => {
         let bankTotal = 0;
         bank.accounts?.forEach(acc => {
           // Use the most recent balance we've seen for this account up to this date
@@ -161,7 +165,7 @@ const Dashboard: React.FC = () => {
     }
 
     return filtered;
-  }, [chartBanks, chartTimeFilter, displayCurrency, fxRates, language]);
+  }, [chartBanks, chartTimeFilter, displayCurrency, fxRates, language, getBank]);
 
   return (
     <div className="p-8 space-y-8">
