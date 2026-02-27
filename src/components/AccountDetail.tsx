@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   ArrowLeft, Save, Trash2, Plus, Calendar, DollarSign, 
-  Landmark, History, ExternalLink, Info, CreditCard, Clock, Edit2, TrendingUp, ChevronDown, ChevronUp, List, LineChart as LineChartIcon
+  Landmark, History, ExternalLink, Info, CreditCard, Clock, Edit2, TrendingUp, ChevronDown, ChevronUp, List, LineChart as LineChartIcon, Shield, Wallet
 } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import { Bank, Account, BalanceLog } from '../types';
@@ -13,6 +13,16 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
+
+const getInstitutionIcon = (type?: string) => {
+  switch (type) {
+    case 'Insurance': return Shield;
+    case 'Investment': return TrendingUp;
+    case 'Other': return Wallet;
+    case 'Bank':
+    default: return Landmark;
+  }
+};
 
 interface AccountDetailProps {
   accountId: number | null;
@@ -178,9 +188,14 @@ const AccountDetail: React.FC<AccountDetailProps> = ({ accountId: bankId, onBack
               <h1 className="text-3xl font-bold tracking-tight text-[var(--text-primary)]">
                 {bankId ? bank.name : t('addAccount')}
               </h1>
+              {bankId && (
+                <span className="px-3 py-1 text-xs font-bold uppercase tracking-wider rounded-full bg-[var(--bg-secondary)] border border-[var(--border-color)] text-[var(--text-secondary)]">
+                  {t((bank.institution_type || 'Bank').toLowerCase())}
+                </span>
+              )}
             </div>
             <div className="flex items-center gap-2 mt-1 text-sm text-[var(--text-secondary)]">
-              <Landmark size={14} />
+              {React.createElement(getInstitutionIcon(bank.institution_type), { size: 14 })}
               <span>{bank.bank_name || t('newAccountSetup')}</span>
               <span className="mx-1">•</span>
               <span>{t('owner')}: {owners.find(o => o.id === bank.owner_id)?.name || bank.owner_name}</span>
@@ -251,8 +266,8 @@ const AccountDetail: React.FC<AccountDetailProps> = ({ accountId: bankId, onBack
             )}
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-xs font-bold uppercase tracking-widest text-[var(--text-secondary)] flex items-center gap-2">
-                <Landmark size={14} className="text-blue-500" />
-                {t('bankInformation')}
+                {React.createElement(getInstitutionIcon(bank.institution_type), { size: 14, className: "text-blue-500" })}
+                {t(`${(bank.institution_type || 'Bank').toLowerCase()}Information`)}
               </h3>
               {!isEditingBank && (
                 <button 
@@ -344,10 +359,10 @@ const AccountDetail: React.FC<AccountDetailProps> = ({ accountId: bankId, onBack
               <div className="space-y-6">
                 <div className="flex items-center gap-4">
                   <div 
-                    className="w-12 h-12 rounded-xl flex items-center justify-center text-white shadow-sm"
+                    className="w-12 h-12 rounded-xl flex items-center justify-center text-white shadow-sm shrink-0"
                     style={{ backgroundColor: bank.logo_color || '#3b82f6' }}
                   >
-                    <Landmark size={24} />
+                    {React.createElement(getInstitutionIcon(bank.institution_type), { size: 24 })}
                   </div>
                   <div>
                     <h4 className="text-xl font-bold text-[var(--text-primary)]">{bank.bank_name || 'Unnamed Bank'}</h4>
@@ -409,8 +424,13 @@ const AccountDetail: React.FC<AccountDetailProps> = ({ accountId: bankId, onBack
                       <CreditCard size={18} />
                     </div>
                     <div>
-                      <p className="font-bold text-[var(--text-primary)]">{acc.name}</p>
-                      <p className="text-xs text-[var(--text-secondary)]">{acc.account_number || 'No Number'} • {t(acc.type.toLowerCase())}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="font-bold text-[var(--text-primary)]">{acc.name}</p>
+                        <span className="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-full bg-[var(--bg-primary)] border border-[var(--border-color)] text-[var(--text-secondary)]">
+                          {t(acc.type.toLowerCase())}
+                        </span>
+                      </div>
+                      <p className="text-xs text-[var(--text-secondary)] mt-0.5">{acc.account_number || 'No Number'}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all">

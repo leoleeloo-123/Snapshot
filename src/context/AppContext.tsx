@@ -117,6 +117,10 @@ const translations = {
     listView: 'List View',
     trendView: 'Trend View',
     editInstitution: 'Edit Institution',
+    insuranceInformation: 'Insurance Information',
+    investmentInformation: 'Investment Information',
+    otherInformation: 'Other Information',
+    institutionName: 'Institution Name',
   },
   zh: {
     dashboard: '仪表盘',
@@ -194,6 +198,10 @@ const translations = {
     listView: '列表视图',
     trendView: '趋势视图',
     editInstitution: '编辑机构',
+    insuranceInformation: '保险信息',
+    investmentInformation: '投资信息',
+    otherInformation: '其他信息',
+    institutionName: '机构名称',
   }
 };
 

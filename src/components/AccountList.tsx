@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Search, Filter, MoreHorizontal, ArrowUpRight, Landmark, CreditCard } from 'lucide-react';
+import { Plus, Search, Filter, MoreHorizontal, ArrowUpRight, Landmark, CreditCard, Shield, TrendingUp, Wallet } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import { Bank } from '../types';
 import { clsx, type ClassValue } from 'clsx';
@@ -8,6 +8,16 @@ import { twMerge } from 'tailwind-merge';
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
+
+const getInstitutionIcon = (type?: string) => {
+  switch (type) {
+    case 'Insurance': return Shield;
+    case 'Investment': return TrendingUp;
+    case 'Other': return Wallet;
+    case 'Bank':
+    default: return Landmark;
+  }
+};
 
 interface AccountListProps {
   onSelectAccount: (id: number | null) => void;
@@ -54,57 +64,65 @@ const AccountList: React.FC<AccountListProps> = ({ onSelectAccount }) => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-        {filteredBanks.map((bank) => (
-          <div 
-            key={bank.id}
-            onClick={() => onSelectAccount(bank.id)}
-            className="card p-6 rounded-2xl hover:shadow-xl hover:border-blue-500/50 transition-all cursor-pointer group relative overflow-hidden"
-          >
-            <div className="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity">
-              <ArrowUpRight size={20} className="text-blue-500" />
-            </div>
-            
-            <div className="flex items-start gap-4">
-              <div 
-                className="w-12 h-12 rounded-xl flex items-center justify-center text-white shadow-inner"
-                style={{ backgroundColor: bank.logo_color || '#3b82f6' }}
-              >
-                <Landmark size={24} />
+        {filteredBanks.map((bank) => {
+          const Icon = getInstitutionIcon(bank.institution_type);
+          return (
+            <div 
+              key={bank.id}
+              onClick={() => onSelectAccount(bank.id)}
+              className="card p-6 rounded-2xl hover:shadow-xl hover:border-blue-500/50 transition-all cursor-pointer group relative overflow-hidden"
+            >
+              <div className="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                <ArrowUpRight size={20} className="text-blue-500" />
               </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-medium text-[var(--text-secondary)]">
-                    {bank.owner_name}
-                  </span>
+              
+              <div className="flex items-start gap-4">
+                <div 
+                  className="w-12 h-12 rounded-xl flex items-center justify-center text-white shadow-inner shrink-0"
+                  style={{ backgroundColor: bank.logo_color || '#3b82f6' }}
+                >
+                  <Icon size={24} />
                 </div>
-                <h3 className="text-lg font-bold mt-1 truncate">{bank.name}</h3>
-                <p className="text-sm text-[var(--text-secondary)] truncate">{bank.bank_name}</p>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-medium text-[var(--text-secondary)]">
+                      {bank.owner_name}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 mt-1">
+                    <h3 className="text-lg font-bold truncate">{bank.name}</h3>
+                    <span className="shrink-0 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-full bg-[var(--bg-secondary)] border border-[var(--border-color)] text-[var(--text-secondary)]">
+                      {t((bank.institution_type || 'Bank').toLowerCase())}
+                    </span>
+                  </div>
+                  <p className="text-sm text-[var(--text-secondary)] truncate">{bank.bank_name}</p>
+                </div>
               </div>
-            </div>
 
-            <div className="mt-6 pt-6 border-t border-[var(--border-color)] flex items-end justify-between">
-              <div>
-                <p className="text-xs text-[var(--text-secondary)] uppercase font-bold tracking-widest">{t('totalBalance')}</p>
-                <p className="text-2xl font-mono font-bold mt-1">
-                  {displayCurrency} {(bank.total_balance || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                </p>
+              <div className="mt-6 pt-6 border-t border-[var(--border-color)] flex items-end justify-between">
+                <div>
+                  <p className="text-xs text-[var(--text-secondary)] uppercase font-bold tracking-widest">{t('totalBalance')}</p>
+                  <p className="text-2xl font-mono font-bold mt-1">
+                    {displayCurrency} {(bank.total_balance || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="text-[10px] text-[var(--text-secondary)] uppercase font-bold">{t('lastUpdate')}</p>
+                  <p className="text-xs font-medium mt-0.5">
+                    {bank.last_updated ? new Date(bank.last_updated).toLocaleDateString() : 'Never'}
+                  </p>
+                </div>
               </div>
-              <div className="text-right">
-                <p className="text-[10px] text-[var(--text-secondary)] uppercase font-bold">{t('lastUpdate')}</p>
-                <p className="text-xs font-medium mt-0.5">
-                  {bank.last_updated ? new Date(bank.last_updated).toLocaleDateString() : 'Never'}
-                </p>
+              
+              <div className="mt-4 pt-4 border-t border-[var(--border-color)] flex items-center justify-between text-sm text-[var(--text-secondary)]">
+                <div className="flex items-center gap-1.5">
+                  <CreditCard size={14} />
+                  <span>{bank.account_count || 0} Accounts</span>
+                </div>
               </div>
             </div>
-            
-            <div className="mt-4 pt-4 border-t border-[var(--border-color)] flex items-center justify-between text-sm text-[var(--text-secondary)]">
-              <div className="flex items-center gap-1.5">
-                <CreditCard size={14} />
-                <span>{bank.account_count || 0} Accounts</span>
-              </div>
-            </div>
-          </div>
-        ))}
+          );
+        })}
         
         {filteredBanks.length === 0 && (
           <div className="col-span-full py-20 text-center">
