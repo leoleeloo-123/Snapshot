@@ -48,7 +48,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeModule, setActiveModule }) => {
   }, []);
 
   return (
-    <div className="w-64 h-screen border-r border-[var(--border-color)] bg-[var(--bg-secondary)] flex flex-col">
+    <div className="w-64 h-screen border-r border-[var(--border-color)] glass-panel flex flex-col">
       <div className="p-6 border-b border-[var(--border-color)]">
         <h1 className="text-xl font-bold tracking-tight flex items-center gap-2">
           <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white">AS</div>
@@ -92,53 +92,30 @@ const Sidebar: React.FC<SidebarProps> = ({ activeModule, setActiveModule }) => {
             <select 
               value={displayCurrency}
               onChange={(e) => setDisplayCurrency(e.target.value)}
-              className="bg-transparent text-sm font-bold text-[var(--text-primary)] focus:outline-none cursor-pointer"
+              className="bg-transparent text-sm font-bold text-[var(--text-primary)] focus:outline-none cursor-pointer text-right"
             >
               {currencies.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
           </div>
 
-          <div className="px-2 relative" ref={dropdownRef}>
-            <span className="text-xs font-bold text-[var(--text-secondary)] uppercase flex items-center gap-1.5 mb-2">
+          <div className="flex items-center justify-between px-2">
+            <span className="text-xs font-bold text-[var(--text-secondary)] uppercase flex items-center gap-1.5">
               <User size={12} /> {t('filterUsers')}
             </span>
-            
-            <button 
-              onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
-              className="w-full flex items-center justify-between p-2 rounded-lg border border-[var(--border-color)] bg-[var(--bg-primary)] text-sm hover:border-blue-500 transition-colors"
+            <select 
+              value={selectedOwners.length === 1 ? selectedOwners[0] : 'all'}
+              onChange={(e) => {
+                if (e.target.value === 'all') {
+                  setSelectedOwners([]);
+                } else {
+                  setSelectedOwners([Number(e.target.value)]);
+                }
+              }}
+              className="bg-transparent text-sm font-bold text-[var(--text-primary)] focus:outline-none cursor-pointer text-right max-w-[100px] truncate"
             >
-              <span className="truncate">
-                {selectedOwners.length === 0 
-                  ? t('allUsers') 
-                  : selectedOwners.map(id => owners.find(o => o.id === id)?.name).join(', ')}
-              </span>
-              <ChevronDown size={14} className={cn("text-[var(--text-secondary)] transition-transform", isUserDropdownOpen && "rotate-180")} />
-            </button>
-
-            {isUserDropdownOpen && (
-              <div className="absolute bottom-full left-2 right-2 mb-2 bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-xl shadow-lg overflow-hidden z-50 py-1">
-                <label className="flex items-center gap-2 px-3 py-2 text-sm text-[var(--text-primary)] cursor-pointer hover:bg-[var(--bg-secondary)] transition-colors">
-                  <input 
-                    type="checkbox" 
-                    checked={selectedOwners.length === 0}
-                    onChange={() => setSelectedOwners([])}
-                    className="rounded border-[var(--border-color)] text-blue-600 focus:ring-blue-500"
-                  />
-                  <span className={selectedOwners.length === 0 ? "font-bold" : ""}>{t('allUsers')}</span>
-                </label>
-                {owners.map(owner => (
-                  <label key={owner.id} className="flex items-center gap-2 px-3 py-2 text-sm text-[var(--text-primary)] cursor-pointer hover:bg-[var(--bg-secondary)] transition-colors">
-                    <input 
-                      type="checkbox" 
-                      checked={selectedOwners.includes(owner.id)}
-                      onChange={() => handleOwnerToggle(owner.id)}
-                      className="rounded border-[var(--border-color)] text-blue-600 focus:ring-blue-500"
-                    />
-                    <span className={selectedOwners.includes(owner.id) ? "font-bold" : ""}>{owner.name}</span>
-                  </label>
-                ))}
-              </div>
-            )}
+              <option value="all">{t('allUsers')}</option>
+              {owners.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
+            </select>
           </div>
         </div>
       </div>

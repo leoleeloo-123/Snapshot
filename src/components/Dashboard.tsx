@@ -1,14 +1,15 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useAppContext } from '../context/AppContext';
-import { Bank } from '../types';
+import { Bank, Asset } from '../types';
 import { Wallet, TrendingUp, Users, LineChart as LineChartIcon, Filter } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 
 const Dashboard: React.FC = () => {
-  const { t, owners, fxRates, displayCurrency, banks, assets, selectedOwners, language, getBank } = useAppContext();
+  const { t, owners, fxRates, displayCurrency, banks, assets, selectedOwners, language, getBank, getAsset } = useAppContext();
 
+  const [dashboardTypeFilter, setDashboardTypeFilter] = useState<'both' | 'accounts' | 'assets'>('accounts');
   const [chartUserFilter, setChartUserFilter] = useState<number | 'all'>('all');
-  const [chartBankFilter, setChartBankFilter] = useState<number | 'all'>('all');
+  const [chartItemFilter, setChartItemFilter] = useState<string | 'all'>('all');
   const [chartTimeFilter, setChartTimeFilter] = useState<'all' | '1m' | '1y' | 'ytd'>('all');
 
   const convertToDisplay = (amount: number, fromCurrency: string) => {
@@ -18,13 +19,13 @@ const Dashboard: React.FC = () => {
     return (amount / usdToFrom) * usdToDisplay;
   };
 
-  const filteredBanks = selectedOwners.length > 0 
-    ? banks.filter(b => selectedOwners.includes(b.owner_id))
-    : banks;
+  const filteredBanks = (dashboardTypeFilter === 'both' || dashboardTypeFilter === 'accounts')
+    ? (selectedOwners.length > 0 ? banks.filter(b => selectedOwners.includes(b.owner_id)) : banks)
+    : [];
 
-  const filteredAssets = selectedOwners.length > 0
-    ? assets.filter(a => selectedOwners.includes(a.owner_id))
-    : assets;
+  const filteredAssets = (dashboardTypeFilter === 'both' || dashboardTypeFilter === 'assets')
+    ? (selectedOwners.length > 0 ? assets.filter(a => selectedOwners.includes(a.owner_id)) : assets)
+    : [];
 
   const totalAssets = filteredBanks.reduce((sum, bank) => {
     return sum + (bank.total_balance || 0); 
@@ -60,40 +61,65 @@ const Dashboard: React.FC = () => {
   // --- Trend Chart Data Preparation ---
   const availableOwners = filteredOwners;
   
-  // Reset bank filter if user filter changes and selected bank doesn't belong to user
+  // Reset item filter if user filter changes and selected item doesn't belong to user
   useEffect(() => {
-    if (chartUserFilter !== 'all' && chartBankFilter !== 'all') {
-      const bank = banks.find(b => b.id === chartBankFilter);
-      if (bank && bank.owner_id !== chartUserFilter) {
-        setChartBankFilter('all');
+    if (chartUserFilter !== 'all' && chartItemFilter !== 'all') {
+      const [type, idStr] = chartItemFilter.split('_');
+      const id = Number(idStr);
+      if (type === 'bank') {
+        const bank = banks.find(b => b.id === id);
+        if (bank && bank.owner_id !== chartUserFilter) setChartItemFilter('all');
+      } else if (type === 'asset') {
+        const asset = assets.find(a => a.id === id);
+        if (asset && asset.owner_id !== chartUserFilter) setChartItemFilter('all');
       }
     }
-  }, [chartUserFilter, banks, chartBankFilter]);
+  }, [chartUserFilter, banks, assets, chartItemFilter]);
 
   const availableChartBanks = filteredBanks.filter(b => {
     return chartUserFilter === 'all' || b.owner_id === chartUserFilter;
   });
 
+  const availableChartAssets = filteredAssets.filter(a => {
+    return chartUserFilter === 'all' || a.owner_id === chartUserFilter;
+  });
+
   const chartBanks = availableChartBanks.filter(b => {
-    return chartBankFilter === 'all' || b.id === chartBankFilter;
+    return chartItemFilter === 'all' || chartItemFilter === `bank_${b.id}`;
+  });
+
+  const chartAssets = availableChartAssets.filter(a => {
+    return chartItemFilter === 'all' || chartItemFilter === `asset_${a.id}`;
   });
 
   const displayChartData = useMemo(() => {
-    const allLogs: { date: string, bankId: number, accountId: number, balance: number, currency: string }[] = [];
+    const allLogs: { date: string, itemId: string, balance: number, currency: string }[] = [];
     
     // Fetch detailed bank data including accounts and logs
     const detailedBanks = chartBanks.map(b => getBank(b.id)).filter(Boolean) as Bank[];
+    const detailedAssets = chartAssets.map(a => getAsset(a.id)).filter(Boolean) as Asset[];
 
     detailedBanks.forEach(bank => {
       bank.accounts?.forEach(acc => {
         acc.logs?.forEach(log => {
           allLogs.push({
             date: log.recorded_at.split('T')[0],
-            bankId: bank.id,
-            accountId: acc.id,
+            itemId: `bank_${acc.id}`,
             balance: log.balance,
             currency: log.currency
           });
+        });
+      });
+    });
+
+    detailedAssets.forEach(asset => {
+      const valuationLogs = asset.logs?.filter(l => l.type === 'Valuation') || [];
+      valuationLogs.forEach(log => {
+        allLogs.push({
+          date: log.recorded_at.split('T')[0],
+          itemId: `asset_${asset.id}`,
+          balance: log.amount,
+          currency: log.currency
         });
       });
     });
@@ -103,37 +129,47 @@ const Dashboard: React.FC = () => {
 
     const uniqueDates = Array.from(new Set(allLogs.map(l => l.date))).sort();
     
-    // We need to track the latest balance for each account as we iterate through dates
-    const currentAccountBalances: Record<number, { balance: number, currency: string }> = {};
+    // We need to track the latest balance for each item as we iterate through dates
+    const currentItemBalances: Record<string, { balance: number, currency: string }> = {};
     
     const chartData = uniqueDates.map(date => {
       // Update current balances with any logs from this date
       const logsOnDate = allLogs.filter(l => l.date === date);
       logsOnDate.forEach(log => {
-        currentAccountBalances[log.accountId] = { balance: log.balance, currency: log.currency };
+        currentItemBalances[log.itemId] = { balance: log.balance, currency: log.currency };
       });
 
       let sum = 0;
-      const bankTotals: Record<string, number> = {};
+      const itemTotals: Record<string, number> = {};
       
       detailedBanks.forEach(bank => {
         let bankTotal = 0;
         bank.accounts?.forEach(acc => {
           // Use the most recent balance we've seen for this account up to this date
-          const accBal = currentAccountBalances[acc.id];
+          const accBal = currentItemBalances[`bank_${acc.id}`];
           if (accBal) {
             bankTotal += convertToDisplay(accBal.balance, accBal.currency);
           }
         });
-        bankTotals[bank.name] = bankTotal;
+        itemTotals[bank.name] = bankTotal;
         sum += bankTotal;
+      });
+
+      detailedAssets.forEach(asset => {
+        let assetTotal = 0;
+        const assetBal = currentItemBalances[`asset_${asset.id}`];
+        if (assetBal) {
+          assetTotal += convertToDisplay(assetBal.balance, assetBal.currency);
+        }
+        itemTotals[asset.name] = assetTotal;
+        sum += assetTotal;
       });
 
       return {
         date,
         displayDate: new Date(date).toLocaleDateString(language === 'zh' ? 'zh-CN' : 'en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
         Sum: sum,
-        ...bankTotals
+        ...itemTotals
       };
     });
 
@@ -176,7 +212,7 @@ const Dashboard: React.FC = () => {
     }
 
     return filtered;
-  }, [chartBanks, chartTimeFilter, displayCurrency, fxRates, language, getBank]);
+  }, [chartBanks, chartAssets, chartTimeFilter, displayCurrency, fxRates, language, getBank, getAsset]);
 
   return (
     <div className="p-8 space-y-8">
@@ -185,15 +221,26 @@ const Dashboard: React.FC = () => {
           <h2 className="text-3xl font-bold tracking-tight">{t('dashboard')}</h2>
           <p className="text-[var(--text-secondary)] mt-1">{t('dashboardDesc')}</p>
         </div>
+        <div className="flex items-center gap-2 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl p-1">
+          <select 
+            value={dashboardTypeFilter}
+            onChange={e => setDashboardTypeFilter(e.target.value as any)}
+            className="bg-transparent text-sm font-bold text-[var(--text-primary)] outline-none py-1.5 px-3 cursor-pointer"
+          >
+            <option value="both">{language === 'zh' ? '全部' : 'Both'}</option>
+            <option value="accounts">{t('accounts')}</option>
+            <option value="assets">{t('assets')}</option>
+          </select>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="card p-6 rounded-2xl shadow-sm bg-gradient-to-br from-blue-600 to-indigo-700 text-white border-0">
+        <div className="card p-6 rounded-2xl shadow-sm bg-gradient-to-br from-blue-600/80 to-indigo-700/80 text-white border border-white/20">
           <div className="flex items-center justify-between">
             <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center">
               <Wallet size={24} />
             </div>
-            <span className="text-xs font-bold uppercase tracking-widest bg-white/20 px-2 py-1 rounded">Total</span>
+            <span className="text-xs font-bold uppercase tracking-widest bg-white/20 px-2 py-1 rounded">{language === 'zh' ? '总计' : 'Total'}</span>
           </div>
           <div className="mt-8">
             <p className="text-sm font-medium opacity-80">{t('totalAssets')} ({displayCurrency})</p>
@@ -208,10 +255,10 @@ const Dashboard: React.FC = () => {
             <div className="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-600">
               <Users size={24} />
             </div>
-            <span className="text-xs font-bold uppercase tracking-widest text-emerald-600 bg-emerald-500/10 px-2 py-1 rounded">Owners</span>
+            <span className="text-xs font-bold uppercase tracking-widest text-emerald-600 bg-emerald-500/10 px-2 py-1 rounded">{language === 'zh' ? '用户' : 'Owners'}</span>
           </div>
           <div className="mt-8">
-            <p className="text-sm font-medium text-[var(--text-secondary)]">Active Owners</p>
+            <p className="text-sm font-medium text-[var(--text-secondary)]">{language === 'zh' ? '活跃用户' : 'Active Owners'}</p>
             <p className="text-4xl font-mono font-bold mt-1">{filteredOwners.length}</p>
           </div>
         </div>
@@ -221,11 +268,11 @@ const Dashboard: React.FC = () => {
             <div className="w-12 h-12 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-600">
               <TrendingUp size={24} />
             </div>
-            <span className="text-xs font-bold uppercase tracking-widest text-amber-600 bg-amber-500/10 px-2 py-1 rounded">Accounts</span>
+            <span className="text-xs font-bold uppercase tracking-widest text-amber-600 bg-amber-500/10 px-2 py-1 rounded">{language === 'zh' ? '项目' : 'Items'}</span>
           </div>
           <div className="mt-8">
-            <p className="text-sm font-medium text-[var(--text-secondary)]">Tracked Banks</p>
-            <p className="text-4xl font-mono font-bold mt-1">{filteredBanks.length}</p>
+            <p className="text-sm font-medium text-[var(--text-secondary)]">{language === 'zh' ? '追踪项目' : 'Tracked Items'}</p>
+            <p className="text-4xl font-mono font-bold mt-1">{filteredBanks.length + filteredAssets.length}</p>
           </div>
         </div>
       </div>
@@ -255,13 +302,16 @@ const Dashboard: React.FC = () => {
 
               <div className="flex items-center gap-2 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-lg p-1">
                 <select 
-                  value={chartBankFilter}
-                  onChange={e => setChartBankFilter(e.target.value === 'all' ? 'all' : Number(e.target.value))}
+                  value={chartItemFilter}
+                  onChange={e => setChartItemFilter(e.target.value)}
                   className="bg-transparent text-xs font-bold text-[var(--text-primary)] outline-none py-1 px-2 cursor-pointer max-w-[150px] truncate"
                 >
-                  <option value="all">{language === 'zh' ? '所有账户' : 'All Accounts'}</option>
+                  <option value="all">{language === 'zh' ? '所有项目' : 'All Items'}</option>
                   {availableChartBanks.map(b => (
-                    <option key={b.id} value={b.id}>{b.name}</option>
+                    <option key={`bank_${b.id}`} value={`bank_${b.id}`}>🏦 {b.name}</option>
+                  ))}
+                  {availableChartAssets.map(a => (
+                    <option key={`asset_${a.id}`} value={`asset_${a.id}`}>💎 {a.name}</option>
                   ))}
                 </select>
               </div>
@@ -334,18 +384,33 @@ const Dashboard: React.FC = () => {
                   />
                   <Legend wrapperStyle={{ paddingTop: '20px' }} />
                   
-                  {/* Render individual bank lines if not too many, or if a specific bank is selected */}
-                  {chartBankFilter === 'all' && chartBanks.length <= 5 && chartBanks.map((bank, idx) => (
-                    <Line 
-                      key={bank.id}
-                      type="monotone" 
-                      dataKey={bank.name} 
-                      stroke={COLORS[(idx + 1) % COLORS.length]} 
-                      strokeWidth={2}
-                      dot={false}
-                      activeDot={{ r: 4, strokeWidth: 0 }}
-                    />
-                  ))}
+                  {/* Render individual item lines if not too many, or if a specific item is selected */}
+                  {chartItemFilter === 'all' && (chartBanks.length + chartAssets.length) <= 5 && (
+                    <>
+                      {chartBanks.map((bank, idx) => (
+                        <Line 
+                          key={`bank_${bank.id}`}
+                          type="monotone" 
+                          dataKey={bank.name} 
+                          stroke={COLORS[(idx + 1) % COLORS.length]} 
+                          strokeWidth={2}
+                          dot={false}
+                          activeDot={{ r: 4, strokeWidth: 0 }}
+                        />
+                      ))}
+                      {chartAssets.map((asset, idx) => (
+                        <Line 
+                          key={`asset_${asset.id}`}
+                          type="monotone" 
+                          dataKey={asset.name} 
+                          stroke={COLORS[(chartBanks.length + idx + 1) % COLORS.length]} 
+                          strokeWidth={2}
+                          dot={false}
+                          activeDot={{ r: 4, strokeWidth: 0 }}
+                        />
+                      ))}
+                    </>
+                  )}
                   
                   {/* Always render the Sum line */}
                   <Line 
@@ -370,7 +435,7 @@ const Dashboard: React.FC = () => {
         <div className="card p-8 rounded-2xl shadow-sm lg:col-span-4">
           <h3 className="text-lg font-bold mb-6 flex items-center gap-2">
             <Users size={20} className="text-blue-500" />
-            Owner Summary
+            {language === 'zh' ? '用户概览' : 'Owner Summary'}
           </h3>
           <div className="space-y-4">
             {ownerData.map((data, idx) => (
@@ -379,7 +444,7 @@ const Dashboard: React.FC = () => {
                   <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[idx % COLORS.length] }} />
                   <div>
                     <p className="font-bold">{data.name}</p>
-                    <p className="text-xs text-[var(--text-secondary)]">{data.count} banks</p>
+                    <p className="text-xs text-[var(--text-secondary)]">{data.count} {language === 'zh' ? '项' : 'items'}</p>
                   </div>
                 </div>
                 <div className="text-right">
@@ -392,7 +457,7 @@ const Dashboard: React.FC = () => {
             ))}
             {ownerData.length === 0 && (
               <div className="text-center py-10 text-[var(--text-secondary)]">
-                No data available. Add accounts with balances to see distribution.
+                {language === 'zh' ? '暂无数据。添加账户和余额以查看分布。' : 'No data available. Add accounts with balances to see distribution.'}
               </div>
             )}
           </div>
