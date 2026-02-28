@@ -13,6 +13,7 @@
   --text-secondary: #4b5563;
   --border-color: rgba(255, 255, 255, 0.5);
   --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+  --glass-shadow-hover: 0 12px 40px 0 rgba(31, 38, 135, 0.15);
 }
 
 .dark {
@@ -22,6 +23,7 @@
   --text-secondary: #d1d5db;
   --border-color: rgba(255, 255, 255, 0.1);
   --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+  --glass-shadow-hover: 0 12px 40px 0 rgba(0, 0, 0, 0.5);
 }
 
 .dark-green {
@@ -31,6 +33,7 @@
   --text-secondary: #a7f3d0;
   --border-color: rgba(167, 243, 208, 0.2);
   --glass-shadow: 0 8px 32px 0 rgba(2, 44, 34, 0.4);
+  --glass-shadow-hover: 0 12px 40px 0 rgba(2, 44, 34, 0.6);
 }
 
 body {
@@ -79,6 +82,12 @@ body.dark-green {
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   box-shadow: var(--glass-shadow);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--glass-shadow-hover);
 }
 
 .glass-panel {

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { LayoutDashboard, Users, Database, Settings, ChevronRight, Globe, User, ChevronDown, Briefcase } from 'lucide-react';
+import { LayoutDashboard, Users, Database, Settings, ChevronRight, Globe, User, ChevronDown, Briefcase, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -15,8 +15,7 @@ interface SidebarProps {
 
 const Sidebar: React.FC<SidebarProps> = ({ activeModule, setActiveModule }) => {
   const { t, displayCurrency, setDisplayCurrency, currencies, owners, selectedOwners, setSelectedOwners } = useAppContext();
-  const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
   const menuItems = [
     { id: 'dashboard', label: t('dashboard'), icon: LayoutDashboard },
@@ -26,37 +25,25 @@ const Sidebar: React.FC<SidebarProps> = ({ activeModule, setActiveModule }) => {
     { id: 'settings', label: t('settings'), icon: Settings },
   ];
 
-  const handleOwnerToggle = (ownerId: number) => {
-    if (selectedOwners.includes(ownerId)) {
-      setSelectedOwners(selectedOwners.filter(id => id !== ownerId));
-    } else {
-      setSelectedOwners([...selectedOwners, ownerId]);
-    }
-  };
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsUserDropdownOpen(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
-
   return (
-    <div className="w-64 h-screen border-r border-[var(--border-color)] glass-panel flex flex-col">
-      <div className="p-6 border-b border-[var(--border-color)]">
-        <h1 className="text-xl font-bold tracking-tight flex items-center gap-2">
-          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white">AS</div>
-          Asset Snapshot
-        </h1>
+    <div className={cn(
+      "border-[var(--border-color)] glass-panel flex transition-all duration-300 z-50",
+      "fixed bottom-0 left-0 right-0 h-16 flex-row border-t md:relative md:h-screen md:flex-col md:border-r md:border-t-0",
+      isCollapsed ? "md:w-20" : "md:w-64"
+    )}>
+      {/* Header - Hidden on mobile */}
+      <div className={cn(
+        "p-6 border-b border-[var(--border-color)] hidden md:flex items-center justify-between",
+        isCollapsed && "justify-center px-4"
+      )}>
+        <div className="flex items-center gap-2 overflow-hidden">
+          <div className="w-8 h-8 shrink-0 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold">AS</div>
+          {!isCollapsed && <h1 className="text-xl font-bold tracking-tight whitespace-nowrap">Asset Snapshot</h1>}
+        </div>
       </div>
       
-      <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
+      {/* Navigation */}
+      <nav className="flex-1 flex flex-row md:flex-col p-2 md:p-4 gap-1 md:gap-2 overflow-x-auto md:overflow-y-auto justify-around md:justify-start items-center md:items-stretch">
         {menuItems.map((item) => {
           const Icon = item.icon;
           const isActive = activeModule === item.id;
@@ -65,8 +52,10 @@ const Sidebar: React.FC<SidebarProps> = ({ activeModule, setActiveModule }) => {
             <button
               key={item.id}
               onClick={() => setActiveModule(item.id)}
+              title={isCollapsed ? item.label : undefined}
               className={cn(
-                "w-full flex items-center justify-between p-3 rounded-xl transition-all duration-200 group",
+                "flex items-center justify-center md:justify-between p-3 rounded-xl transition-all duration-200 group shrink-0",
+                isCollapsed ? "w-12 h-12" : "w-auto md:w-full",
                 isActive 
                   ? "bg-blue-600 text-white shadow-lg shadow-blue-500/20" 
                   : "hover:bg-[var(--bg-primary)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
@@ -74,50 +63,63 @@ const Sidebar: React.FC<SidebarProps> = ({ activeModule, setActiveModule }) => {
             >
               <div className="flex items-center gap-3">
                 <Icon size={20} className={cn(isActive ? "text-white" : "text-blue-500")} />
-                <span className="font-medium">{item.label}</span>
+                {!isCollapsed && <span className="font-medium hidden md:block whitespace-nowrap">{item.label}</span>}
               </div>
-              {isActive && <ChevronRight size={16} />}
+              {!isCollapsed && isActive && <ChevronRight size={16} className="hidden md:block" />}
             </button>
           );
         })}
       </nav>
       
-      <div className="p-4 border-t border-[var(--border-color)] space-y-4">
-        {/* Global Filters */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between px-2">
-            <span className="text-xs font-bold text-[var(--text-secondary)] uppercase flex items-center gap-1.5">
-              <Globe size={12} /> {t('displayCurrency')}
-            </span>
-            <select 
-              value={displayCurrency}
-              onChange={(e) => setDisplayCurrency(e.target.value)}
-              className="bg-transparent text-sm font-bold text-[var(--text-primary)] focus:outline-none cursor-pointer text-right"
-            >
-              {currencies.map(c => <option key={c} value={c}>{c}</option>)}
-            </select>
-          </div>
+      {/* Footer / Filters - Hidden on mobile */}
+      <div className="p-4 border-t border-[var(--border-color)] hidden md:flex flex-col gap-4">
+        {!isCollapsed && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between px-2">
+              <span className="text-xs font-bold text-[var(--text-secondary)] uppercase flex items-center gap-1.5">
+                <Globe size={12} /> {t('displayCurrency')}
+              </span>
+              <select 
+                value={displayCurrency}
+                onChange={(e) => setDisplayCurrency(e.target.value)}
+                className="bg-transparent text-sm font-bold text-[var(--text-primary)] focus:outline-none cursor-pointer text-right"
+              >
+                {currencies.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
 
-          <div className="flex items-center justify-between px-2">
-            <span className="text-xs font-bold text-[var(--text-secondary)] uppercase flex items-center gap-1.5">
-              <User size={12} /> {t('filterUsers')}
-            </span>
-            <select 
-              value={selectedOwners.length === 1 ? selectedOwners[0] : 'all'}
-              onChange={(e) => {
-                if (e.target.value === 'all') {
-                  setSelectedOwners([]);
-                } else {
-                  setSelectedOwners([Number(e.target.value)]);
-                }
-              }}
-              className="bg-transparent text-sm font-bold text-[var(--text-primary)] focus:outline-none cursor-pointer text-right max-w-[100px] truncate"
-            >
-              <option value="all">{t('allUsers')}</option>
-              {owners.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
-            </select>
+            <div className="flex items-center justify-between px-2">
+              <span className="text-xs font-bold text-[var(--text-secondary)] uppercase flex items-center gap-1.5">
+                <User size={12} /> {t('filterUsers')}
+              </span>
+              <select 
+                value={selectedOwners.length === 1 ? selectedOwners[0] : 'all'}
+                onChange={(e) => {
+                  if (e.target.value === 'all') {
+                    setSelectedOwners([]);
+                  } else {
+                    setSelectedOwners([Number(e.target.value)]);
+                  }
+                }}
+                className="bg-transparent text-sm font-bold text-[var(--text-primary)] focus:outline-none cursor-pointer text-right max-w-[100px] truncate"
+              >
+                <option value="all">{t('allUsers')}</option>
+                {owners.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
+              </select>
+            </div>
           </div>
-        </div>
+        )}
+        
+        <button 
+          onClick={() => setIsCollapsed(!isCollapsed)}
+          className={cn(
+            "flex items-center text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors p-2 rounded-lg hover:bg-[var(--bg-primary)]",
+            isCollapsed ? "justify-center" : "justify-end"
+          )}
+          title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+        >
+          {isCollapsed ? <PanelLeftOpen size={20} /> : <PanelLeftClose size={20} />}
+        </button>
       </div>
     </div>
   );

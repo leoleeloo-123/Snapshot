@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { Bank, Asset } from '../types';
 import { Wallet, TrendingUp, Users, LineChart as LineChartIcon, Filter } from 'lucide-react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip, Legend } from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 
 const Dashboard: React.FC = () => {
   const { t, owners, fxRates, displayCurrency, banks, assets, selectedOwners, language, getBank, getAsset } = useAppContext();
@@ -348,7 +348,19 @@ const Dashboard: React.FC = () => {
           <div className="flex-1 w-full min-h-[350px]">
             {displayChartData.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={displayChartData} margin={{ top: 20, right: 10, left: 0, bottom: 0 }}>
+                <AreaChart data={displayChartData} margin={{ top: 20, right: 10, left: 0, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="colorSum" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                    </linearGradient>
+                    {COLORS.map((color, idx) => (
+                      <linearGradient key={`color-${idx}`} id={`color-${idx}`} x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor={color} stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor={color} stopOpacity={0}/>
+                      </linearGradient>
+                    ))}
+                  </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" vertical={false} />
                   <XAxis 
                     dataKey="displayDate" 
@@ -387,42 +399,54 @@ const Dashboard: React.FC = () => {
                   {/* Render individual item lines if not too many, or if a specific item is selected */}
                   {chartItemFilter === 'all' && (chartBanks.length + chartAssets.length) <= 5 && (
                     <>
-                      {chartBanks.map((bank, idx) => (
-                        <Line 
-                          key={`bank_${bank.id}`}
-                          type="monotone" 
-                          dataKey={bank.name} 
-                          stroke={COLORS[(idx + 1) % COLORS.length]} 
-                          strokeWidth={2}
-                          dot={false}
-                          activeDot={{ r: 4, strokeWidth: 0 }}
-                        />
-                      ))}
-                      {chartAssets.map((asset, idx) => (
-                        <Line 
-                          key={`asset_${asset.id}`}
-                          type="monotone" 
-                          dataKey={asset.name} 
-                          stroke={COLORS[(chartBanks.length + idx + 1) % COLORS.length]} 
-                          strokeWidth={2}
-                          dot={false}
-                          activeDot={{ r: 4, strokeWidth: 0 }}
-                        />
-                      ))}
+                      {chartBanks.map((bank, idx) => {
+                        const colorIdx = (idx + 1) % COLORS.length;
+                        return (
+                          <Area 
+                            key={`bank_${bank.id}`}
+                            type="monotone" 
+                            dataKey={bank.name} 
+                            stroke={COLORS[colorIdx]} 
+                            fillOpacity={1}
+                            fill={`url(#color-${colorIdx})`}
+                            strokeWidth={2}
+                            dot={false}
+                            activeDot={{ r: 4, strokeWidth: 0 }}
+                          />
+                        );
+                      })}
+                      {chartAssets.map((asset, idx) => {
+                        const colorIdx = (chartBanks.length + idx + 1) % COLORS.length;
+                        return (
+                          <Area 
+                            key={`asset_${asset.id}`}
+                            type="monotone" 
+                            dataKey={asset.name} 
+                            stroke={COLORS[colorIdx]} 
+                            fillOpacity={1}
+                            fill={`url(#color-${colorIdx})`}
+                            strokeWidth={2}
+                            dot={false}
+                            activeDot={{ r: 4, strokeWidth: 0 }}
+                          />
+                        );
+                      })}
                     </>
                   )}
                   
                   {/* Always render the Sum line */}
-                  <Line 
+                  <Area 
                     type="monotone" 
                     dataKey="Sum" 
                     name={language === 'zh' ? '总计' : 'Total Sum'}
                     stroke="#3b82f6" 
+                    fillOpacity={1}
+                    fill="url(#colorSum)"
                     strokeWidth={4}
                     dot={false}
                     activeDot={{ r: 6, strokeWidth: 0 }}
                   />
-                </LineChart>
+                </AreaChart>
               </ResponsiveContainer>
             ) : (
               <div className="h-full flex items-center justify-center text-[var(--text-secondary)]">
