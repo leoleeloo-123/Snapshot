@@ -5,36 +5,38 @@ import { Wallet, TrendingUp, Users, LineChart as LineChartIcon, Filter } from 'l
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 
 const Dashboard: React.FC = () => {
-  const { t, owners, fxRates, displayCurrency, banks, assets, selectedOwners, language, getBank, getAsset } = useAppContext();
+  const { t, owners, fxRates, displayCurrency, banks, assets, selectedOwners, language, getBank, getAsset, currencies } = useAppContext();
 
   const [dashboardTypeFilter, setDashboardTypeFilter] = useState<'both' | 'accounts' | 'assets'>('accounts');
+  const [dashboardDisplayCurrency, setDashboardDisplayCurrency] = useState(displayCurrency);
+  const [dashboardSelectedOwners, setDashboardSelectedOwners] = useState<number[]>(selectedOwners);
   const [chartUserFilter, setChartUserFilter] = useState<number | 'all'>('all');
   const [chartItemFilter, setChartItemFilter] = useState<string | 'all'>('all');
   const [chartTimeFilter, setChartTimeFilter] = useState<'all' | '1m' | '1y' | 'ytd'>('all');
 
   const convertToDisplay = (amount: number, fromCurrency: string) => {
-    if (fromCurrency === displayCurrency) return amount;
+    if (fromCurrency === dashboardDisplayCurrency) return amount;
     const usdToFrom = fxRates.find(r => r.base_currency === 'USD' && r.target_currency === fromCurrency)?.rate || 1;
-    const usdToDisplay = fxRates.find(r => r.base_currency === 'USD' && r.target_currency === displayCurrency)?.rate || 1;
+    const usdToDisplay = fxRates.find(r => r.base_currency === 'USD' && r.target_currency === dashboardDisplayCurrency)?.rate || 1;
     return (amount / usdToFrom) * usdToDisplay;
   };
 
   const filteredBanks = (dashboardTypeFilter === 'both' || dashboardTypeFilter === 'accounts')
-    ? (selectedOwners.length > 0 ? banks.filter(b => selectedOwners.includes(b.owner_id)) : banks)
+    ? (dashboardSelectedOwners.length > 0 ? banks.filter(b => dashboardSelectedOwners.includes(b.owner_id)) : banks)
     : [];
 
   const filteredAssets = (dashboardTypeFilter === 'both' || dashboardTypeFilter === 'assets')
-    ? (selectedOwners.length > 0 ? assets.filter(a => selectedOwners.includes(a.owner_id)) : assets)
+    ? (dashboardSelectedOwners.length > 0 ? assets.filter(a => dashboardSelectedOwners.includes(a.owner_id)) : assets)
     : [];
 
   const totalAssets = filteredBanks.reduce((sum, bank) => {
-    return sum + (bank.total_balance || 0); 
+    return sum + convertToDisplay(bank.total_balance || 0, displayCurrency); 
   }, 0) + filteredAssets.reduce((sum, asset) => {
     return sum + convertToDisplay(asset.value || 0, asset.currency || 'USD');
   }, 0);
 
-  const filteredOwners = selectedOwners.length > 0
-    ? owners.filter(o => selectedOwners.includes(o.id))
+  const filteredOwners = dashboardSelectedOwners.length > 0
+    ? owners.filter(o => dashboardSelectedOwners.includes(o.id))
     : owners;
 
   const ownerData = filteredOwners.map(owner => {
@@ -42,7 +44,7 @@ const Dashboard: React.FC = () => {
     const ownerAssets = filteredAssets.filter(asset => asset.owner_id === owner.id);
     
     const bankTotal = ownerBanks.reduce((sum, bank) => {
-      return sum + (bank.total_balance || 0);
+      return sum + convertToDisplay(bank.total_balance || 0, displayCurrency);
     }, 0);
     
     const assetTotal = ownerAssets.reduce((sum, asset) => {
@@ -212,7 +214,7 @@ const Dashboard: React.FC = () => {
     }
 
     return filtered;
-  }, [chartBanks, chartAssets, chartTimeFilter, displayCurrency, fxRates, language, getBank, getAsset]);
+  }, [chartBanks, chartAssets, chartTimeFilter, dashboardDisplayCurrency, fxRates, language, getBank, getAsset]);
 
   return (
     <div className="p-8 space-y-8">
@@ -221,16 +223,45 @@ const Dashboard: React.FC = () => {
           <h2 className="text-3xl font-bold tracking-tight">{t('dashboard')}</h2>
           <p className="text-[var(--text-secondary)] mt-1">{t('dashboardDesc')}</p>
         </div>
-        <div className="flex items-center gap-2 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl p-1">
-          <select 
-            value={dashboardTypeFilter}
-            onChange={e => setDashboardTypeFilter(e.target.value as any)}
-            className="bg-transparent text-sm font-bold text-[var(--text-primary)] outline-none py-1.5 px-3 cursor-pointer"
-          >
-            <option value="both">{language === 'zh' ? '全部' : 'Both'}</option>
-            <option value="accounts">{t('accounts')}</option>
-            <option value="assets">{t('assets')}</option>
-          </select>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl p-1">
+            <select 
+              value={dashboardDisplayCurrency}
+              onChange={(e) => setDashboardDisplayCurrency(e.target.value)}
+              className="bg-transparent text-sm font-bold text-[var(--text-primary)] outline-none py-1.5 px-3 cursor-pointer"
+            >
+              {currencies.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+          </div>
+
+          <div className="flex items-center gap-2 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl p-1">
+            <select 
+              value={dashboardSelectedOwners.length === 1 ? dashboardSelectedOwners[0] : 'all'}
+              onChange={(e) => {
+                if (e.target.value === 'all') {
+                  setDashboardSelectedOwners([]);
+                } else {
+                  setDashboardSelectedOwners([Number(e.target.value)]);
+                }
+              }}
+              className="bg-transparent text-sm font-bold text-[var(--text-primary)] outline-none py-1.5 px-3 cursor-pointer max-w-[120px] truncate"
+            >
+              <option value="all">{t('allUsers')}</option>
+              {owners.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
+            </select>
+          </div>
+
+          <div className="flex items-center gap-2 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl p-1">
+            <select 
+              value={dashboardTypeFilter}
+              onChange={e => setDashboardTypeFilter(e.target.value as any)}
+              className="bg-transparent text-sm font-bold text-[var(--text-primary)] outline-none py-1.5 px-3 cursor-pointer"
+            >
+              <option value="both">{language === 'zh' ? '全部' : 'Both'}</option>
+              <option value="accounts">{t('accounts')}</option>
+              <option value="assets">{t('assets')}</option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -243,9 +274,9 @@ const Dashboard: React.FC = () => {
             <span className="text-xs font-bold uppercase tracking-widest bg-white/20 px-2 py-1 rounded">{language === 'zh' ? '总计' : 'Total'}</span>
           </div>
           <div className="mt-8">
-            <p className="text-sm font-medium opacity-80">{t('totalAssets')} ({displayCurrency})</p>
+            <p className="text-sm font-medium opacity-80">{t('totalAssets')} ({dashboardDisplayCurrency})</p>
             <p className="text-4xl font-mono font-bold mt-1">
-              {displayCurrency} {totalAssets.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+              {dashboardDisplayCurrency} {totalAssets.toLocaleString(undefined, { maximumFractionDigits: 0 })}
             </p>
           </div>
         </div>
@@ -390,7 +421,7 @@ const Dashboard: React.FC = () => {
                     itemStyle={{ fontWeight: 'bold' }}
                     labelStyle={{ color: 'var(--text-secondary)', marginBottom: '0.25rem' }}
                     formatter={(value: number, name: string) => [
-                      `${displayCurrency} ${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, 
+                      `${dashboardDisplayCurrency} ${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, 
                       name
                     ]}
                   />
@@ -472,7 +503,7 @@ const Dashboard: React.FC = () => {
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="font-mono font-bold">{displayCurrency} {data.value.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
+                  <p className="font-mono font-bold">{dashboardDisplayCurrency} {data.value.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
                   <p className="text-[10px] text-[var(--text-secondary)] font-bold uppercase">
                     {totalAssets > 0 ? ((data.value / totalAssets) * 100).toFixed(1) : '0.0'}%
                   </p>

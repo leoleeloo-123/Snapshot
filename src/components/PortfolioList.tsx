@@ -1,13 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { Plus, Search, Filter, MoreHorizontal, ArrowUpRight, Landmark, CreditCard, Shield, TrendingUp, Wallet } from 'lucide-react';
+import React, { useState } from 'react';
+import { Plus, Search, ArrowUpRight, Landmark, CreditCard, Shield, TrendingUp, Wallet } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import { Bank } from '../types';
-import { clsx, type ClassValue } from 'clsx';
-import { twMerge } from 'tailwind-merge';
-
-function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
 
 const getInstitutionIcon = (type?: string) => {
   switch (type) {
@@ -19,35 +13,36 @@ const getInstitutionIcon = (type?: string) => {
   }
 };
 
-interface AccountListProps {
+interface PortfolioListProps {
   onSelectAccount: (id: number | null) => void;
 }
 
-const AccountList: React.FC<AccountListProps> = ({ onSelectAccount }) => {
-  const { t, owners, banks, selectedOwners, displayCurrency } = useAppContext();
+const PortfolioList: React.FC<PortfolioListProps> = ({ onSelectAccount }) => {
+  const { t, banks, language, displayCurrency } = useAppContext();
   const [searchTerm, setSearchTerm] = useState('');
 
   const filteredBanks = banks.filter(bank => {
     const matchesSearch = bank.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
                           bank.bank_name?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesOwner = selectedOwners.length === 0 || selectedOwners.includes(bank.owner_id);
-    return matchesSearch && matchesOwner;
+    return matchesSearch;
   });
 
   return (
     <div className="p-8 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">{t('accounts')}</h2>
-          <p className="text-[var(--text-secondary)] mt-1">Manage and track assets across all owners.</p>
+          <h2 className="text-3xl font-bold tracking-tight">{language === 'zh' ? '投资组合' : 'Portfolio'}</h2>
+          <p className="text-[var(--text-secondary)] mt-1">{language === 'zh' ? '管理和追踪您的所有账户。' : 'Manage and track all your accounts.'}</p>
         </div>
-        <button 
-          onClick={() => onSelectAccount(null)}
-          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-medium transition-all shadow-lg shadow-blue-500/20"
-        >
-          <Plus size={20} />
-          {t('addAccount')}
-        </button>
+        <div className="flex items-center gap-3">
+          <button 
+            onClick={() => onSelectAccount(null)}
+            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-medium transition-all shadow-lg shadow-blue-500/20"
+          >
+            <Plus size={20} />
+            {t('addAccount')}
+          </button>
+        </div>
       </div>
 
       <div className="flex items-center gap-4">
@@ -55,7 +50,7 @@ const AccountList: React.FC<AccountListProps> = ({ onSelectAccount }) => {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-secondary)]" size={18} />
           <input 
             type="text" 
-            placeholder="Search accounts..."
+            placeholder={language === 'zh' ? '搜索账户...' : 'Search accounts...'}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
@@ -64,11 +59,12 @@ const AccountList: React.FC<AccountListProps> = ({ onSelectAccount }) => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        {/* Render Banks */}
         {filteredBanks.map((bank) => {
           const Icon = getInstitutionIcon(bank.institution_type);
           return (
             <div 
-              key={bank.id}
+              key={`bank-${bank.id}`}
               onClick={() => onSelectAccount(bank.id)}
               className="card p-6 rounded-2xl hover:shadow-xl hover:border-blue-500/50 transition-all cursor-pointer group relative overflow-hidden"
             >
@@ -116,20 +112,20 @@ const AccountList: React.FC<AccountListProps> = ({ onSelectAccount }) => {
               <div className="mt-4 pt-4 border-t border-[var(--border-color)] flex items-center justify-between text-sm text-[var(--text-secondary)]">
                 <div className="flex items-center gap-1.5">
                   <CreditCard size={14} />
-                  <span>{bank.account_count || 0} Accounts</span>
+                  <span>{bank.account_count || 0} {language === 'zh' ? '项' : 'Accounts'}</span>
                 </div>
               </div>
             </div>
           );
         })}
-        
+
         {filteredBanks.length === 0 && (
           <div className="col-span-full py-20 text-center">
             <div className="w-20 h-20 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-full flex items-center justify-center mx-auto mb-4">
               <Landmark size={32} className="text-[var(--text-secondary)] opacity-20" />
             </div>
-            <h3 className="text-xl font-bold">No accounts found</h3>
-            <p className="text-[var(--text-secondary)] mt-2">Try adjusting your search or add a new account.</p>
+            <h3 className="text-xl font-bold">{language === 'zh' ? '未找到任何项目' : 'No items found'}</h3>
+            <p className="text-[var(--text-secondary)] mt-2">{language === 'zh' ? '尝试调整搜索词或添加新项目。' : 'Try adjusting your search or add a new item.'}</p>
           </div>
         )}
       </div>
@@ -137,4 +133,4 @@ const AccountList: React.FC<AccountListProps> = ({ onSelectAccount }) => {
   );
 };
 
-export default AccountList;
+export default PortfolioList;

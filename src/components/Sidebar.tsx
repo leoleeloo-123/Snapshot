@@ -73,43 +73,6 @@ const Sidebar: React.FC<SidebarProps> = ({ activeModule, setActiveModule }) => {
       
       {/* Footer / Filters - Hidden on mobile */}
       <div className="p-4 border-t border-[var(--border-color)] hidden md:flex flex-col gap-4">
-        {!isCollapsed && (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between px-2">
-              <span className="text-xs font-bold text-[var(--text-secondary)] uppercase flex items-center gap-1.5">
-                <Globe size={12} /> {t('displayCurrency')}
-              </span>
-              <select 
-                value={displayCurrency}
-                onChange={(e) => setDisplayCurrency(e.target.value)}
-                className="bg-transparent text-sm font-bold text-[var(--text-primary)] focus:outline-none cursor-pointer text-right"
-              >
-                {currencies.map(c => <option key={c} value={c}>{c}</option>)}
-              </select>
-            </div>
-
-            <div className="flex items-center justify-between px-2">
-              <span className="text-xs font-bold text-[var(--text-secondary)] uppercase flex items-center gap-1.5">
-                <User size={12} /> {t('filterUsers')}
-              </span>
-              <select 
-                value={selectedOwners.length === 1 ? selectedOwners[0] : 'all'}
-                onChange={(e) => {
-                  if (e.target.value === 'all') {
-                    setSelectedOwners([]);
-                  } else {
-                    setSelectedOwners([Number(e.target.value)]);
-                  }
-                }}
-                className="bg-transparent text-sm font-bold text-[var(--text-primary)] focus:outline-none cursor-pointer text-right max-w-[100px] truncate"
-              >
-                <option value="all">{t('allUsers')}</option>
-                {owners.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
-              </select>
-            </div>
-          </div>
-        )}
-        
         <button 
           onClick={() => setIsCollapsed(!isCollapsed)}
           className={cn(
