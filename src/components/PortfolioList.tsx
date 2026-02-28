@@ -91,12 +91,9 @@ const PortfolioList: React.FC<PortfolioListProps> = ({ onSelectAccount, onSelect
               onClick={() => onSelectAccount(bank.id)}
               className="card p-6 rounded-2xl hover:shadow-xl hover:border-blue-500/50 transition-all cursor-pointer group relative overflow-hidden"
             >
-              <div className="absolute top-4 right-4 flex items-center gap-2">
+              <div className="absolute top-4 right-4 flex items-center">
                 <div className="min-w-[32px] h-8 px-2 rounded-full bg-[var(--bg-secondary)] border border-[var(--border-color)] flex items-center justify-center text-xs font-bold text-[var(--text-secondary)]">
                   {bank.owner_name?.substring(0, 2).toUpperCase()}
-                </div>
-                <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                  <ArrowUpRight size={20} className="text-blue-500" />
                 </div>
               </div>
               
@@ -108,9 +105,9 @@ const PortfolioList: React.FC<PortfolioListProps> = ({ onSelectAccount, onSelect
                   <Icon size={28} />
                 </div>
                 <div className="flex-1 min-w-0 pr-16">
-                  <div className="flex items-center gap-3">
+                  <div className="flex flex-col items-start justify-center h-14 gap-1">
                     <h3 className="text-2xl font-bold truncate leading-none">{bank.name}</h3>
-                    <span className="shrink-0 px-3 py-1 text-xs font-bold uppercase tracking-wider rounded-full bg-[var(--bg-secondary)] border border-[var(--border-color)] text-[var(--text-secondary)]">
+                    <span className="shrink-0 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-full bg-[var(--bg-secondary)] border border-[var(--border-color)] text-[var(--text-secondary)]">
                       {t((bank.institution_type || 'Bank').toLowerCase())}
                     </span>
                   </div>
@@ -151,12 +148,9 @@ const PortfolioList: React.FC<PortfolioListProps> = ({ onSelectAccount, onSelect
               onClick={() => onSelectAsset(asset.id)}
               className="card p-6 rounded-2xl hover:shadow-xl hover:border-emerald-500/50 transition-all cursor-pointer group relative overflow-hidden"
             >
-              <div className="absolute top-4 right-4 flex items-center gap-2">
+              <div className="absolute top-4 right-4 flex items-center">
                 <div className="min-w-[32px] h-8 px-2 rounded-full bg-[var(--bg-secondary)] border border-[var(--border-color)] flex items-center justify-center text-xs font-bold text-[var(--text-secondary)]">
                   {asset.owner_name?.substring(0, 2).toUpperCase()}
-                </div>
-                <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                  <ArrowUpRight size={20} className="text-emerald-500" />
                 </div>
               </div>
               
@@ -168,9 +162,9 @@ const PortfolioList: React.FC<PortfolioListProps> = ({ onSelectAccount, onSelect
                   <Icon size={28} />
                 </div>
                 <div className="flex-1 min-w-0 pr-16">
-                  <div className="flex items-center gap-3">
+                  <div className="flex flex-col items-start justify-center h-14 gap-1">
                     <h3 className="text-2xl font-bold truncate leading-none">{asset.name}</h3>
-                    <span className="shrink-0 px-3 py-1 text-xs font-bold uppercase tracking-wider rounded-full bg-[var(--bg-secondary)] border border-[var(--border-color)] text-[var(--text-secondary)]">
+                    <span className="shrink-0 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-full bg-[var(--bg-secondary)] border border-[var(--border-color)] text-[var(--text-secondary)]">
                       {t((asset.asset_type || 'Other').toLowerCase())}
                     </span>
                   </div>
@@ -181,7 +175,7 @@ const PortfolioList: React.FC<PortfolioListProps> = ({ onSelectAccount, onSelect
                 <div>
                   <p className="text-xs text-[var(--text-secondary)] uppercase font-bold tracking-widest">{t('currentValue')}</p>
                   <p className="text-2xl font-mono font-bold mt-1">
-                    {displayCurrency} {(asset.value || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    {asset.currency || displayCurrency} {(asset.value || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </p>
                 </div>
                 <div className="text-right">
