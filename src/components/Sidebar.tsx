@@ -37,7 +37,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeModule, setActiveModule }) => {
       )}>
         <div className="flex items-center gap-2 overflow-hidden">
           <div className="w-8 h-8 shrink-0 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold">AS</div>
-          {!isCollapsed && <h1 className="text-xl font-bold tracking-tight whitespace-nowrap">Asset Snapshot</h1>}
+          {!isCollapsed && <h1 className="text-2xl font-bold tracking-tight whitespace-nowrap">Asset Snapshot</h1>}
         </div>
       </div>
       

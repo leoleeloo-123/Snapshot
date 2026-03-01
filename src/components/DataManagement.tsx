@@ -244,8 +244,8 @@ const DataManagement: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Data Management</h2>
-          <p className="text-[var(--text-secondary)] mt-1">Bulk import and export tools for database management.</p>
+          <h2 className="text-4xl font-bold tracking-tight">{t('dataManagement')}</h2>
+          <p className="text-[var(--text-secondary)] mt-1">{t('dataManagementDesc')}</p>
         </div>
         <div className="grid grid-cols-2 md:flex md:items-center gap-3 w-full md:w-auto">
           <button 
@@ -257,12 +257,12 @@ const DataManagement: React.FC = () => {
             title="Review Database"
           >
             <ClipboardList size={20} />
-            <span className="md:hidden lg:inline">Review DB</span>
+            <span className="md:hidden lg:inline">{t('reviewDatabase')}</span>
           </button>
           
           <label className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-medium transition-all shadow-lg shadow-blue-500/20 cursor-pointer">
             <Upload size={20} />
-            <span className="whitespace-nowrap">Upload Excel</span>
+            <span className="whitespace-nowrap">{t('uploadExcel')}</span>
             <input type="file" accept=".xlsx, .xls" className="hidden" onChange={handleFileSelect} />
           </label>
 
@@ -271,7 +271,7 @@ const DataManagement: React.FC = () => {
             className="flex items-center justify-center gap-2 bg-[var(--bg-secondary)] hover:bg-[var(--bg-primary)] text-[var(--text-primary)] border border-[var(--border-color)] px-5 py-2.5 rounded-xl font-medium transition-all shadow-sm"
           >
             <FileSpreadsheet size={20} />
-            <span className="whitespace-nowrap">Export Excel</span>
+            <span className="whitespace-nowrap">{t('exportExcel')}</span>
           </button>
 
           <button 
@@ -279,7 +279,7 @@ const DataManagement: React.FC = () => {
             className="flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-xl font-medium transition-all shadow-lg shadow-red-500/20"
           >
             <Trash2 size={20} />
-            <span className="whitespace-nowrap">Clear DB</span>
+            <span className="whitespace-nowrap">{t('clearDB')}</span>
           </button>
         </div>
       </div>
@@ -308,25 +308,25 @@ const DataManagement: React.FC = () => {
                 <Database size={24} />
               </div>
               <div>
-                <h3 className="font-bold text-[var(--text-primary)]">Database Status</h3>
-                <p className="text-xs text-[var(--text-secondary)]">Local Storage</p>
+                <h3 className="font-bold text-[var(--text-primary)]">{t('databaseStatus')}</h3>
+                <p className="text-xs text-[var(--text-secondary)]">{t('localStorage')}</p>
               </div>
             </div>
             <div className="space-y-3">
               <div className="flex justify-between items-center text-sm p-3 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border-color)]">
-                <span className="text-[var(--text-secondary)] font-bold uppercase tracking-wider text-xs">Owners</span>
+                <span className="text-[var(--text-secondary)] font-bold uppercase tracking-wider text-xs">{t('owners')}</span>
                 <span className="font-mono font-bold text-[var(--text-primary)] bg-[var(--bg-primary)] px-2 py-1 rounded border border-[var(--border-color)]">{owners.length}</span>
               </div>
               <div className="flex justify-between items-center text-sm p-3 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border-color)]">
-                <span className="text-[var(--text-secondary)] font-bold uppercase tracking-wider text-xs">Banks</span>
+                <span className="text-[var(--text-secondary)] font-bold uppercase tracking-wider text-xs">{t('banks')}</span>
                 <span className="font-mono font-bold text-[var(--text-primary)] bg-[var(--bg-primary)] px-2 py-1 rounded border border-[var(--border-color)]">{banks.length}</span>
               </div>
               <div className="flex justify-between items-center text-sm p-3 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border-color)]">
-                <span className="text-[var(--text-secondary)] font-bold uppercase tracking-wider text-xs">Accounts</span>
+                <span className="text-[var(--text-secondary)] font-bold uppercase tracking-wider text-xs">{t('accounts')}</span>
                 <span className="font-mono font-bold text-[var(--text-primary)] bg-[var(--bg-primary)] px-2 py-1 rounded border border-[var(--border-color)]">{JSON.parse(localStorage.getItem('accounts') || '[]').length}</span>
               </div>
               <div className="flex justify-between items-center text-sm p-3 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border-color)]">
-                <span className="text-[var(--text-secondary)] font-bold uppercase tracking-wider text-xs">Logs</span>
+                <span className="text-[var(--text-secondary)] font-bold uppercase tracking-wider text-xs">{t('logs')}</span>
                 <span className="font-mono font-bold text-[var(--text-primary)] bg-[var(--bg-primary)] px-2 py-1 rounded border border-[var(--border-color)]">{JSON.parse(localStorage.getItem('logs') || '[]').length}</span>
               </div>
             </div>
@@ -334,13 +334,13 @@ const DataManagement: React.FC = () => {
           
           <div className="card p-6 rounded-2xl shadow-sm md:col-span-2 flex flex-col justify-center items-center text-center border-dashed border-2 border-[var(--border-color)] bg-[var(--bg-secondary)]">
             <ClipboardList size={48} className="text-[var(--text-secondary)] mb-4 opacity-50" />
-            <h3 className="text-lg font-bold text-[var(--text-primary)] mb-2">Review Database</h3>
-            <p className="text-sm text-[var(--text-secondary)] mb-6 max-w-md">Click the review button in the top right to inspect your current database tables, or upload an Excel file to preview and import new data.</p>
+            <h3 className="text-lg font-bold text-[var(--text-primary)] mb-2">{t('reviewDatabase')}</h3>
+            <p className="text-sm text-[var(--text-secondary)] mb-6 max-w-md">{t('reviewDatabaseDesc')}</p>
             <button 
               onClick={() => setViewMode('review_db')}
               className="bg-[var(--bg-primary)] border border-[var(--border-color)] hover:border-blue-500 text-[var(--text-primary)] px-6 py-2 rounded-xl font-bold transition-all"
             >
-              Open Review Mode
+              {t('openReviewMode')}
             </button>
           </div>
         </div>
@@ -349,12 +349,12 @@ const DataManagement: React.FC = () => {
           {/* Tabs */}
           <div className="flex overflow-x-auto border-b border-[var(--border-color)] hide-scrollbar">
             {[
-              { id: 'owners', label: 'Owners', icon: '👥' },
-              { id: 'banks', label: 'Banks', icon: '🏦' },
-              { id: 'accounts', label: 'Accounts', icon: '💳' },
-              { id: 'logs', label: 'Balance Logs', icon: '📈' },
-              { id: 'config', label: 'Config', icon: '⚙️' },
-              { id: 'fxRates', label: 'FX Rates', icon: '💱' }
+              { id: 'owners', label: t('owners'), icon: '👥' },
+              { id: 'banks', label: t('banks'), icon: '🏦' },
+              { id: 'accounts', label: t('accounts'), icon: '💳' },
+              { id: 'logs', label: t('balanceLogs'), icon: '📈' },
+              { id: 'config', label: t('config'), icon: '⚙️' },
+              { id: 'fxRates', label: t('fxRates'), icon: '💱' }
             ].map(tab => (
               <button
                 key={tab.id}
@@ -380,8 +380,8 @@ const DataManagement: React.FC = () => {
                   <AlertCircle size={24} />
                 </div>
                 <div>
-                  <h3 className="font-bold text-amber-800 dark:text-amber-300 text-lg">Previewing Import Data</h3>
-                  <p className="text-sm text-amber-700/80 dark:text-amber-400/80">Review the parsed data below. Click confirm to overwrite your current database.</p>
+                  <h3 className="font-bold text-amber-800 dark:text-amber-300 text-lg">{t('previewingImportData')}</h3>
+                  <p className="text-sm text-amber-700/80 dark:text-amber-400/80">{t('previewingImportDataDesc')}</p>
                 </div>
               </div>
               <div className="flex items-center gap-3 shrink-0">
@@ -389,14 +389,14 @@ const DataManagement: React.FC = () => {
                   onClick={() => { setPreviewData(null); setViewMode('overview'); }}
                   className="px-6 py-3 rounded-xl font-bold text-amber-700 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/40 hover:bg-amber-200 dark:hover:bg-amber-900/60 transition-all"
                 >
-                  Cancel
+                  {t('cancel')}
                 </button>
                 <button 
                   onClick={handleConfirmImport}
                   className="flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-white bg-amber-600 hover:bg-amber-700 transition-all shadow-lg shadow-amber-500/20"
                 >
                   <Check size={18} />
-                  Confirm Import
+                  {t('confirmImport')}
                 </button>
               </div>
             </div>
@@ -408,7 +408,7 @@ const DataManagement: React.FC = () => {
               <div className="flex items-center gap-3">
                 <Database size={20} className="text-blue-500" />
                 <h3 className="font-bold text-[var(--text-primary)] uppercase tracking-wider">
-                  {previewData ? 'PREVIEW: ' : 'DATABASE REVIEW: '} {activeTab} ({getDisplayData().length})
+                  {previewData ? t('previewPrefix') : t('databaseReviewPrefix')} {t(activeTab === 'fxRates' ? 'fxRates' : activeTab === 'logs' ? 'balanceLogs' : activeTab)} ({getDisplayData().length})
                 </h3>
               </div>
               {viewMode === 'review_db' && (
@@ -416,7 +416,7 @@ const DataManagement: React.FC = () => {
                   onClick={() => setViewMode('overview')}
                   className="text-sm font-bold text-[var(--text-secondary)] hover:text-[var(--text-primary)] bg-[var(--bg-primary)] border border-[var(--border-color)] px-4 py-2 rounded-lg transition-all"
                 >
-                  Close Review
+                  {t('closeReview')}
                 </button>
               )}
             </div>

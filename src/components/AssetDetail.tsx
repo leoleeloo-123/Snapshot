@@ -171,7 +171,7 @@ const AssetDetail: React.FC<AssetDetailProps> = ({ assetId, onBack }) => {
           </button>
           <div>
             <div className="flex items-center gap-3">
-              <h1 className="text-3xl font-bold tracking-tight text-[var(--text-primary)]">
+              <h1 className="text-4xl font-bold tracking-tight text-[var(--text-primary)]">
                 {assetId ? asset.name : t('addAsset')}
               </h1>
               {assetId && (

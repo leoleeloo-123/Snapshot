@@ -30,7 +30,7 @@ const AssetList: React.FC<AssetListProps> = ({ onSelectAsset }) => {
     <div className="p-8 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">{language === 'zh' ? '资产' : 'Assets'}</h2>
+          <h2 className="text-4xl font-bold tracking-tight">{language === 'zh' ? '资产' : 'Assets'}</h2>
           <p className="text-[var(--text-secondary)] mt-1">{language === 'zh' ? '管理和追踪您的所有资产。' : 'Manage and track all your assets.'}</p>
         </div>
         <div className="flex items-center gap-3">

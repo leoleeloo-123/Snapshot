@@ -94,8 +94,8 @@ const Settings: React.FC = () => {
     <div className="p-6 md:p-8 space-y-10 max-w-4xl mx-auto">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">{t('settings')}</h2>
-          <p className="text-[var(--text-secondary)] mt-1">Personalize your experience and manage users.</p>
+          <h2 className="text-4xl font-bold tracking-tight">{t('settings')}</h2>
+          <p className="text-[var(--text-secondary)] mt-1">{t('settingsDesc')}</p>
         </div>
       </div>
 
