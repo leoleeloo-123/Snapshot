@@ -94,7 +94,7 @@ const PortfolioList: React.FC<PortfolioListProps> = ({ onSelectAccount, onSelect
   });
 
   return (
-    <div className="p-4 md:p-8 space-y-6">
+    <div className="p-6 md:p-8 space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h2 className="text-3xl font-bold tracking-tight">{language === 'zh' ? '账户与资产' : 'Accounts & Assets'}</h2>
@@ -153,14 +153,14 @@ const PortfolioList: React.FC<PortfolioListProps> = ({ onSelectAccount, onSelect
               </select>
             </div>
             {/* Desktop */}
-            <div className="hidden md:flex items-center relative">
+            <div className="hidden md:flex items-center relative bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl shadow-sm">
               <div className="absolute left-3 pointer-events-none text-[var(--text-secondary)]">
                 <Layers size={16} />
               </div>
               <select 
                 value={selectedType}
                 onChange={(e) => setSelectedType(e.target.value)}
-                className="shrink-0 pl-9 pr-8 py-2 rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 appearance-none shadow-sm"
+                className="shrink-0 pl-9 pr-8 py-2 bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 appearance-none rounded-xl"
                 style={{ backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: 'right 0.5rem center', backgroundRepeat: 'no-repeat', backgroundSize: '1.5em 1.5em' }}
               >
                 <option value="all">{language === 'zh' ? '所有类型' : 'All Types'}</option>
@@ -188,14 +188,14 @@ const PortfolioList: React.FC<PortfolioListProps> = ({ onSelectAccount, onSelect
               </select>
             </div>
             {/* Desktop */}
-            <div className="hidden md:flex items-center relative">
+            <div className="hidden md:flex items-center relative bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl shadow-sm">
               <div className="absolute left-3 pointer-events-none text-[var(--text-secondary)]">
                 <Globe size={16} />
               </div>
               <select 
                 value={selectedCountry}
                 onChange={(e) => setSelectedCountry(e.target.value)}
-                className="shrink-0 pl-9 pr-8 py-2 rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 appearance-none shadow-sm"
+                className="shrink-0 pl-9 pr-8 py-2 bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 appearance-none rounded-xl"
                 style={{ backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: 'right 0.5rem center', backgroundRepeat: 'no-repeat', backgroundSize: '1.5em 1.5em' }}
               >
                 <option value="all">{language === 'zh' ? '所有地区' : 'All Regions'}</option>
@@ -224,14 +224,14 @@ const PortfolioList: React.FC<PortfolioListProps> = ({ onSelectAccount, onSelect
               </select>
             </div>
             {/* Desktop */}
-            <div className="hidden md:flex items-center relative">
+            <div className="hidden md:flex items-center relative bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl shadow-sm">
               <div className="absolute left-3 pointer-events-none text-[var(--text-secondary)]">
                 <User size={16} />
               </div>
               <select 
                 value={selectedUser}
                 onChange={(e) => setSelectedUser(e.target.value)}
-                className="shrink-0 pl-9 pr-8 py-2 rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 appearance-none shadow-sm"
+                className="shrink-0 pl-9 pr-8 py-2 bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 appearance-none rounded-xl"
                 style={{ backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: 'right 0.5rem center', backgroundRepeat: 'no-repeat', backgroundSize: '1.5em 1.5em' }}
               >
                 <option value="all">{language === 'zh' ? '所有用户' : 'All Users'}</option>
@@ -260,14 +260,14 @@ const PortfolioList: React.FC<PortfolioListProps> = ({ onSelectAccount, onSelect
               </select>
             </div>
             {/* Desktop */}
-            <div className="hidden md:flex items-center relative">
+            <div className="hidden md:flex items-center relative bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl shadow-sm">
               <div className="absolute left-3 pointer-events-none text-[var(--text-secondary)]">
                 <Tag size={16} />
               </div>
               <select 
                 value={selectedTag}
                 onChange={(e) => setSelectedTag(e.target.value)}
-                className="shrink-0 pl-9 pr-8 py-2 rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 appearance-none shadow-sm"
+                className="shrink-0 pl-9 pr-8 py-2 bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 appearance-none rounded-xl"
                 style={{ backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: 'right 0.5rem center', backgroundRepeat: 'no-repeat', backgroundSize: '1.5em 1.5em' }}
               >
                 <option value="all">{language === 'zh' ? '所有标签' : 'All Tags'}</option>

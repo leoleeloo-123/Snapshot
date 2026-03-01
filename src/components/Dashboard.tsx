@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { Bank, Asset } from '../types';
-import { Wallet, TrendingUp, Users, LineChart as LineChartIcon, Filter } from 'lucide-react';
+import { Wallet, TrendingUp, Users, LineChart as LineChartIcon, Filter, Layers, DollarSign } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 
 const Dashboard: React.FC = () => {
@@ -217,50 +217,119 @@ const Dashboard: React.FC = () => {
   }, [chartBanks, chartAssets, chartTimeFilter, dashboardDisplayCurrency, fxRates, language, getBank, getAsset]);
 
   return (
-    <div className="p-8 space-y-8">
-      <div className="flex items-center justify-between">
+    <div className="p-6 md:p-8 space-y-8">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h2 className="text-3xl font-bold tracking-tight">{t('dashboard')}</h2>
           <p className="text-[var(--text-secondary)] mt-1">{t('dashboardDesc')}</p>
         </div>
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl p-1">
-            <select 
-              value={dashboardDisplayCurrency}
-              onChange={(e) => setDashboardDisplayCurrency(e.target.value)}
-              className="bg-transparent text-sm font-bold text-[var(--text-primary)] outline-none py-1.5 px-3 cursor-pointer"
-            >
-              {currencies.map(c => <option key={c} value={c}>{c}</option>)}
-            </select>
+        <div className="flex items-center justify-between md:justify-start gap-2 md:gap-4 w-full md:w-auto">
+          
+          {/* Currency Filter */}
+          <div className="relative flex items-center flex-1 md:flex-none justify-center">
+            {/* Mobile */}
+            <div className="md:hidden w-10 h-10 rounded-full bg-[var(--bg-secondary)] border border-[var(--border-color)] flex items-center justify-center text-[var(--text-secondary)] relative shadow-sm">
+              <DollarSign size={18} />
+              <select 
+                value={dashboardDisplayCurrency}
+                onChange={(e) => setDashboardDisplayCurrency(e.target.value)}
+                className="absolute inset-0 w-full h-full opacity-0 appearance-none cursor-pointer"
+              >
+                {currencies.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
+            {/* Desktop */}
+            <div className="hidden md:flex items-center relative bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl shadow-sm">
+              <div className="absolute left-3 pointer-events-none text-[var(--text-secondary)]">
+                <DollarSign size={16} />
+              </div>
+              <select 
+                value={dashboardDisplayCurrency}
+                onChange={(e) => setDashboardDisplayCurrency(e.target.value)}
+                className="shrink-0 pl-9 pr-8 py-2 bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 appearance-none rounded-xl"
+                style={{ backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: 'right 0.5rem center', backgroundRepeat: 'no-repeat', backgroundSize: '1.5em 1.5em' }}
+              >
+                {currencies.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
           </div>
 
-          <div className="flex items-center gap-2 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl p-1">
-            <select 
-              value={dashboardSelectedOwners.length === 1 ? dashboardSelectedOwners[0] : 'all'}
-              onChange={(e) => {
-                if (e.target.value === 'all') {
-                  setDashboardSelectedOwners([]);
-                } else {
-                  setDashboardSelectedOwners([Number(e.target.value)]);
-                }
-              }}
-              className="bg-transparent text-sm font-bold text-[var(--text-primary)] outline-none py-1.5 px-3 cursor-pointer max-w-[120px] truncate"
-            >
-              <option value="all">{t('allUsers')}</option>
-              {owners.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
-            </select>
+          {/* User Filter */}
+          <div className="relative flex items-center flex-1 md:flex-none justify-center">
+            {/* Mobile */}
+            <div className="md:hidden w-10 h-10 rounded-full bg-[var(--bg-secondary)] border border-[var(--border-color)] flex items-center justify-center text-[var(--text-secondary)] relative shadow-sm">
+              <Users size={18} />
+              {dashboardSelectedOwners.length > 0 && <div className="absolute top-0 right-0 w-2.5 h-2.5 bg-blue-500 rounded-full border-2 border-[var(--bg-secondary)]"></div>}
+              <select 
+                value={dashboardSelectedOwners.length === 1 ? dashboardSelectedOwners[0] : 'all'}
+                onChange={(e) => {
+                  if (e.target.value === 'all') {
+                    setDashboardSelectedOwners([]);
+                  } else {
+                    setDashboardSelectedOwners([Number(e.target.value)]);
+                  }
+                }}
+                className="absolute inset-0 w-full h-full opacity-0 appearance-none cursor-pointer"
+              >
+                <option value="all">{t('allUsers')}</option>
+                {owners.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
+              </select>
+            </div>
+            {/* Desktop */}
+            <div className="hidden md:flex items-center relative bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl shadow-sm">
+              <div className="absolute left-3 pointer-events-none text-[var(--text-secondary)]">
+                <Users size={16} />
+              </div>
+              <select 
+                value={dashboardSelectedOwners.length === 1 ? dashboardSelectedOwners[0] : 'all'}
+                onChange={(e) => {
+                  if (e.target.value === 'all') {
+                    setDashboardSelectedOwners([]);
+                  } else {
+                    setDashboardSelectedOwners([Number(e.target.value)]);
+                  }
+                }}
+                className="shrink-0 pl-9 pr-8 py-2 bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 appearance-none rounded-xl max-w-[150px] truncate"
+                style={{ backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: 'right 0.5rem center', backgroundRepeat: 'no-repeat', backgroundSize: '1.5em 1.5em' }}
+              >
+                <option value="all">{t('allUsers')}</option>
+                {owners.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
+              </select>
+            </div>
           </div>
 
-          <div className="flex items-center gap-2 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl p-1">
-            <select 
-              value={dashboardTypeFilter}
-              onChange={e => setDashboardTypeFilter(e.target.value as any)}
-              className="bg-transparent text-sm font-bold text-[var(--text-primary)] outline-none py-1.5 px-3 cursor-pointer"
-            >
-              <option value="both">{language === 'zh' ? '全部' : 'Both'}</option>
-              <option value="accounts">{t('accounts')}</option>
-              <option value="assets">{t('assets')}</option>
-            </select>
+          {/* Type Filter */}
+          <div className="relative flex items-center flex-1 md:flex-none justify-center">
+            {/* Mobile */}
+            <div className="md:hidden w-10 h-10 rounded-full bg-[var(--bg-secondary)] border border-[var(--border-color)] flex items-center justify-center text-[var(--text-secondary)] relative shadow-sm">
+              <Layers size={18} />
+              {dashboardTypeFilter !== 'both' && <div className="absolute top-0 right-0 w-2.5 h-2.5 bg-blue-500 rounded-full border-2 border-[var(--bg-secondary)]"></div>}
+              <select 
+                value={dashboardTypeFilter}
+                onChange={e => setDashboardTypeFilter(e.target.value as any)}
+                className="absolute inset-0 w-full h-full opacity-0 appearance-none cursor-pointer"
+              >
+                <option value="both">{language === 'zh' ? '全部' : 'Both'}</option>
+                <option value="accounts">{t('accounts')}</option>
+                <option value="assets">{t('assets')}</option>
+              </select>
+            </div>
+            {/* Desktop */}
+            <div className="hidden md:flex items-center relative bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl shadow-sm">
+              <div className="absolute left-3 pointer-events-none text-[var(--text-secondary)]">
+                <Layers size={16} />
+              </div>
+              <select 
+                value={dashboardTypeFilter}
+                onChange={e => setDashboardTypeFilter(e.target.value as any)}
+                className="shrink-0 pl-9 pr-8 py-2 bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 appearance-none rounded-xl"
+                style={{ backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: 'right 0.5rem center', backgroundRepeat: 'no-repeat', backgroundSize: '1.5em 1.5em' }}
+              >
+                <option value="both">{language === 'zh' ? '全部' : 'Both'}</option>
+                <option value="accounts">{t('accounts')}</option>
+                <option value="assets">{t('assets')}</option>
+              </select>
+            </div>
           </div>
         </div>
       </div>

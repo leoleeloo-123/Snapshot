@@ -240,45 +240,46 @@ const DataManagement: React.FC = () => {
   };
 
   return (
-    <div className="p-8 space-y-8 max-w-[1600px] mx-auto">
+    <div className="p-6 md:p-8 space-y-8">
       {/* Header */}
-      <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-6 bg-[var(--bg-primary)] p-6 rounded-2xl shadow-sm border border-[var(--border-color)]">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-3xl font-black tracking-tight uppercase text-[var(--text-primary)]">Data Management</h2>
-          <p className="text-sm font-bold text-[var(--text-secondary)] mt-1 uppercase tracking-wider">Bulk import and export tools for database management.</p>
+          <h2 className="text-3xl font-bold tracking-tight">Data Management</h2>
+          <p className="text-[var(--text-secondary)] mt-1">Bulk import and export tools for database management.</p>
         </div>
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="grid grid-cols-2 md:flex md:items-center gap-3 w-full md:w-auto">
           <button 
             onClick={() => { setViewMode(viewMode === 'review_db' ? 'overview' : 'review_db'); setPreviewData(null); }}
             className={cn(
-              "w-12 h-12 flex items-center justify-center rounded-xl border transition-all",
+              "flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-medium transition-all shadow-sm border",
               viewMode === 'review_db' ? "bg-blue-50 border-blue-200 text-blue-600 dark:bg-blue-900/20 dark:border-blue-800/30 dark:text-blue-400" : "bg-[var(--bg-secondary)] border-[var(--border-color)] text-[var(--text-secondary)] hover:bg-[var(--bg-primary)] hover:text-[var(--text-primary)]"
             )}
             title="Review Database"
           >
             <ClipboardList size={20} />
+            <span className="md:hidden lg:inline">Review DB</span>
           </button>
           
-          <label className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-bold transition-all shadow-lg shadow-blue-500/20 cursor-pointer">
-            <Upload size={18} />
-            UPLOAD EXCEL
+          <label className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-medium transition-all shadow-lg shadow-blue-500/20 cursor-pointer">
+            <Upload size={20} />
+            <span className="whitespace-nowrap">Upload Excel</span>
             <input type="file" accept=".xlsx, .xls" className="hidden" onChange={handleFileSelect} />
           </label>
 
           <button 
             onClick={handleExport}
-            className="flex items-center gap-2 bg-[var(--bg-primary)] hover:bg-[var(--bg-secondary)] text-[var(--text-primary)] border border-[var(--border-color)] px-6 py-3 rounded-xl font-bold transition-all"
+            className="flex items-center justify-center gap-2 bg-[var(--bg-secondary)] hover:bg-[var(--bg-primary)] text-[var(--text-primary)] border border-[var(--border-color)] px-5 py-2.5 rounded-xl font-medium transition-all shadow-sm"
           >
-            <FileSpreadsheet size={18} />
-            EXPORT EXCEL
+            <FileSpreadsheet size={20} />
+            <span className="whitespace-nowrap">Export Excel</span>
           </button>
 
           <button 
             onClick={handleReset}
-            className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-xl font-bold transition-all shadow-lg shadow-red-500/20"
+            className="flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-xl font-medium transition-all shadow-lg shadow-red-500/20"
           >
-            <Trash2 size={18} />
-            CLEAR DB
+            <Trash2 size={20} />
+            <span className="whitespace-nowrap">Clear DB</span>
           </button>
         </div>
       </div>
