@@ -24,6 +24,20 @@ const getInstitutionIcon = (type?: string) => {
   }
 };
 
+const getTranslationKey = (type: string) => {
+  switch (type) {
+    case 'Real Estate': return 'realEstate';
+    case 'Credit Card': return 'credit';
+    case 'Bank': return 'bank';
+    case 'Investment': return 'investment';
+    case 'Insurance': return 'insurance';
+    case 'Vehicle': return 'vehicle';
+    case 'Equity': return 'equity';
+    case 'Other': return 'other';
+    default: return type.toLowerCase();
+  }
+};
+
 interface AccountDetailProps {
   accountId: number | null;
   onBack: () => void;
@@ -190,7 +204,7 @@ const AccountDetail: React.FC<AccountDetailProps> = ({ accountId: bankId, onBack
               </h1>
               {bankId && (
                 <span className="px-3 py-1 text-xs font-bold uppercase tracking-wider rounded-full bg-[var(--bg-secondary)] border border-[var(--border-color)] text-[var(--text-secondary)]">
-                  {t((bank.institution_type || 'Bank').toLowerCase())}
+                  {t(getTranslationKey(bank.institution_type || 'Bank'))}
                 </span>
               )}
             </div>
@@ -267,7 +281,7 @@ const AccountDetail: React.FC<AccountDetailProps> = ({ accountId: bankId, onBack
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-xs font-bold uppercase tracking-widest text-[var(--text-secondary)] flex items-center gap-2">
                 {React.createElement(getInstitutionIcon(bank.institution_type), { size: 14, className: "text-blue-500" })}
-                {t(`${(bank.institution_type || 'Bank').toLowerCase()}Information`)}
+                {t(`${getTranslationKey(bank.institution_type || 'Bank')}Information`)}
               </h3>
               {!isEditingBank && (
                 <button 
@@ -427,7 +441,7 @@ const AccountDetail: React.FC<AccountDetailProps> = ({ accountId: bankId, onBack
                       <div className="flex items-center gap-2">
                         <p className="font-bold text-[var(--text-primary)]">{acc.name}</p>
                         <span className="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-full bg-[var(--bg-primary)] border border-[var(--border-color)] text-[var(--text-secondary)]">
-                          {t(acc.type.toLowerCase())}
+                          {t(getTranslationKey(acc.type))}
                         </span>
                       </div>
                       <p className="text-xs text-[var(--text-secondary)] mt-0.5">{acc.account_number || 'No Number'}</p>

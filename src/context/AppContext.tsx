@@ -200,7 +200,7 @@ const translations = {
     accountName: '账户名称',
     accountType: '账户类型',
     never: '从未',
-    bank: '银行账户',
+    bank: '银行',
     credit: '信用卡',
     investment: '投资',
     other: '其他',

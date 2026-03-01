@@ -23,6 +23,20 @@ const getAssetIcon = (type?: string) => {
   }
 };
 
+const getTranslationKey = (type: string) => {
+  switch (type) {
+    case 'Real Estate': return 'realEstate';
+    case 'Credit Card': return 'credit';
+    case 'Bank': return 'bank';
+    case 'Investment': return 'investment';
+    case 'Insurance': return 'insurance';
+    case 'Vehicle': return 'vehicle';
+    case 'Equity': return 'equity';
+    case 'Other': return 'other';
+    default: return type.toLowerCase();
+  }
+};
+
 interface AssetDetailProps {
   assetId: number | null;
   onBack: () => void;
@@ -162,7 +176,7 @@ const AssetDetail: React.FC<AssetDetailProps> = ({ assetId, onBack }) => {
               </h1>
               {assetId && (
                 <span className="px-3 py-1 text-xs font-bold uppercase tracking-wider rounded-full bg-[var(--bg-secondary)] border border-[var(--border-color)] text-[var(--text-secondary)]">
-                  {t((asset.asset_type || 'Other').toLowerCase())}
+                  {t(getTranslationKey(asset.asset_type || 'Other'))}
                 </span>
               )}
             </div>
@@ -490,7 +504,7 @@ const AssetDetail: React.FC<AssetDetailProps> = ({ assetId, onBack }) => {
                                       {log.currency} {log.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                     </p>
                                     <p className="text-xs font-bold mt-1 text-[var(--text-secondary)]">
-                                      {t(log.type.toLowerCase())}
+                                      {t(getTranslationKey(log.type))}
                                     </p>
                                   </div>
                                   {log.comment && (

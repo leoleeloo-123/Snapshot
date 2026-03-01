@@ -23,6 +23,20 @@ const getAssetIcon = (type?: string) => {
   }
 };
 
+const getTranslationKey = (type: string) => {
+  switch (type) {
+    case 'Real Estate': return 'realEstate';
+    case 'Credit Card': return 'credit';
+    case 'Bank': return 'bank';
+    case 'Investment': return 'investment';
+    case 'Insurance': return 'insurance';
+    case 'Vehicle': return 'vehicle';
+    case 'Equity': return 'equity';
+    case 'Other': return 'other';
+    default: return type.toLowerCase();
+  }
+};
+
 interface PortfolioListProps {
   onSelectAccount: (id: number | null) => void;
   onSelectAsset: (id: number | null) => void;
@@ -105,10 +119,10 @@ const PortfolioList: React.FC<PortfolioListProps> = ({ onSelectAccount, onSelect
                   <Icon size={28} />
                 </div>
                 <div className="flex-1 min-w-0 pr-16">
-                  <div className="flex flex-col items-start justify-center h-14 gap-1">
+                  <div className="flex flex-col items-start justify-center h-14 gap-2">
                     <h3 className="text-2xl font-bold truncate leading-none">{bank.name}</h3>
                     <span className="shrink-0 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-full bg-[var(--bg-secondary)] border border-[var(--border-color)] text-[var(--text-secondary)]">
-                      {t((bank.institution_type || 'Bank').toLowerCase())}
+                      {t(getTranslationKey(bank.institution_type || 'Bank'))}
                     </span>
                   </div>
                 </div>
@@ -162,10 +176,10 @@ const PortfolioList: React.FC<PortfolioListProps> = ({ onSelectAccount, onSelect
                   <Icon size={28} />
                 </div>
                 <div className="flex-1 min-w-0 pr-16">
-                  <div className="flex flex-col items-start justify-center h-14 gap-1">
+                  <div className="flex flex-col items-start justify-center h-14 gap-2">
                     <h3 className="text-2xl font-bold truncate leading-none">{asset.name}</h3>
                     <span className="shrink-0 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-full bg-[var(--bg-secondary)] border border-[var(--border-color)] text-[var(--text-secondary)]">
-                      {t((asset.asset_type || 'Other').toLowerCase())}
+                      {t(getTranslationKey(asset.asset_type || 'Other'))}
                     </span>
                   </div>
                 </div>
