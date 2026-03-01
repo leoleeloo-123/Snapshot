@@ -190,7 +190,7 @@ const AccountDetail: React.FC<AccountDetailProps> = ({ accountId: bankId, onBack
   }, 0) || 0;
 
   return (
-    <div className="min-h-screen bg-[var(--bg-primary)]">
+    <div className="min-h-[100dvh] bg-[var(--bg-primary)]">
       {/* Minimal Header - Aligned with content */}
       <div className="px-8 py-6 flex items-center justify-between">
         <div className="flex items-center gap-6">

@@ -27,7 +27,9 @@ const Sidebar: React.FC<SidebarProps> = ({ activeModule, setActiveModule }) => {
   return (
     <div className={cn(
       "border-[var(--border-color)] glass-panel flex transition-all duration-300 z-50",
-      "fixed bottom-0 left-0 right-0 h-16 flex-row border-t md:relative md:h-screen md:flex-col md:border-r md:border-t-0",
+      "fixed bottom-0 left-0 right-0 flex-row border-t md:relative md:flex-col md:border-r md:border-t-0",
+      "h-[calc(4rem+var(--sab))] md:h-[100dvh]",
+      "pb-[var(--sab)] pl-[var(--sal)] pr-[var(--sar)] md:pr-0 md:pt-[var(--sat)]",
       isCollapsed ? "md:w-20" : "md:w-64"
     )}>
       {/* Header - Hidden on mobile */}

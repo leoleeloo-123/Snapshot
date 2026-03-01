@@ -43,13 +43,13 @@ const AppContent: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col md:flex-row min-h-screen bg-[var(--bg-primary)]">
+    <div className="flex flex-col md:flex-row min-h-[100dvh] bg-[var(--bg-primary)]">
       <Sidebar activeModule={activeModule} setActiveModule={(m) => {
         setActiveModule(m);
         setSelectedAccountId(undefined);
         setSelectedAssetId(undefined);
       }} />
-      <main className="flex-1 overflow-y-auto h-screen pb-20 md:pb-0">
+      <main className="flex-1 overflow-y-auto h-[100dvh] pb-[calc(5rem+var(--sab))] md:pb-[var(--sab)] pt-[var(--sat)] pl-[var(--sal)] pr-[var(--sar)] md:pl-0">
         <AnimatePresence mode="wait">
           <motion.div
             key={selectedAccountId !== undefined ? `account-${selectedAccountId}` : selectedAssetId !== undefined ? `asset-${selectedAssetId}` : activeModule}

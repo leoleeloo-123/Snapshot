@@ -163,7 +163,7 @@ const AssetDetail: React.FC<AssetDetailProps> = ({ assetId, onBack }) => {
   const displayValue = convertToDisplay(asset.value || 0, asset.currency || 'USD');
 
   return (
-    <div className="min-h-screen bg-[var(--bg-primary)]">
+    <div className="min-h-[100dvh] bg-[var(--bg-primary)]">
       <div className="px-8 py-6 flex items-center justify-between">
         <div className="flex items-center gap-6">
           <button onClick={onBack} className="w-10 h-10 flex items-center justify-center bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-full hover:shadow-md transition-all text-[var(--text-primary)]">
