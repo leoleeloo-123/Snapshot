@@ -43,7 +43,7 @@ interface PortfolioListProps {
 }
 
 const PortfolioList: React.FC<PortfolioListProps> = ({ onSelectAccount, onSelectAsset }) => {
-  const { t, banks, assets, language, displayCurrency } = useAppContext();
+  const { t, banks, assets, language, displayCurrency, getCurrencyByCountry, convertToDisplay } = useAppContext();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState('all');
   const [selectedCountry, setSelectedCountry] = useState('all');
@@ -317,7 +317,7 @@ const PortfolioList: React.FC<PortfolioListProps> = ({ onSelectAccount, onSelect
                 <div>
                   <p className="text-xs text-[var(--text-secondary)] uppercase font-bold tracking-widest">{t('totalBalance')}</p>
                   <p className="text-2xl font-mono font-bold mt-1">
-                    {displayCurrency} {(bank.total_balance || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    {bank.currency || displayCurrency} {(bank.total_balance || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </p>
                 </div>
                 <div className="text-right">
@@ -341,6 +341,8 @@ const PortfolioList: React.FC<PortfolioListProps> = ({ onSelectAccount, onSelect
         {/* Render Assets */}
         {filteredAssets.map((asset) => {
           const Icon = getAssetIcon(asset.asset_type);
+          const localCurrency = getCurrencyByCountry(asset.country);
+          const displayValue = convertToDisplay(asset.value || 0, asset.currency || 'USD', localCurrency);
           return (
             <div 
               key={`asset-${asset.id}`}
@@ -374,7 +376,7 @@ const PortfolioList: React.FC<PortfolioListProps> = ({ onSelectAccount, onSelect
                 <div>
                   <p className="text-xs text-[var(--text-secondary)] uppercase font-bold tracking-widest">{t('currentValue')}</p>
                   <p className="text-2xl font-mono font-bold mt-1">
-                    {asset.currency || displayCurrency} {(asset.value || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    {localCurrency} {displayValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </p>
                 </div>
                 <div className="text-right">

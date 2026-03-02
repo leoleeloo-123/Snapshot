@@ -49,7 +49,7 @@ const AccountDetail: React.FC<AccountDetailProps> = ({ accountId: bankId, onBack
     getBank, addBank, updateBank, deleteBank,
     addSubAccount, updateSubAccount, deleteSubAccount,
     addLog, updateLog, deleteLog,
-    displayCurrency, fxRates
+    displayCurrency, fxRates, getCurrencyByCountry, convertToDisplay
   } = useAppContext();
   
   const [bank, setBank] = useState<Partial<Bank>>({
@@ -176,17 +176,12 @@ const AccountDetail: React.FC<AccountDetailProps> = ({ accountId: bankId, onBack
 
   const selectedAccount = bank.accounts?.find(a => a.id === selectedAccountId);
   
-  const convertToDisplay = (amount: number, fromCurrency: string) => {
-    if (fromCurrency === displayCurrency) return amount;
-    const usdToFrom = fxRates.find(r => r.base_currency === 'USD' && r.target_currency === fromCurrency)?.rate || 1;
-    const usdToDisplay = fxRates.find(r => r.base_currency === 'USD' && r.target_currency === displayCurrency)?.rate || 1;
-    return (amount / usdToFrom) * usdToDisplay;
-  };
+  const localCurrency = getCurrencyByCountry(bank.country);
 
   const totalBalance = bank.accounts?.reduce((sum, acc) => {
     const lastLog = acc.logs?.[0];
     if (!lastLog) return sum;
-    return sum + convertToDisplay(lastLog.balance, lastLog.currency);
+    return sum + convertToDisplay(lastLog.balance, lastLog.currency, localCurrency);
   }, 0) || 0;
 
   return (
@@ -258,7 +253,7 @@ const AccountDetail: React.FC<AccountDetailProps> = ({ accountId: bankId, onBack
               <div className="p-4 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/30">
                 <p className="text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase">{t('totalBalance')}</p>
                 <p className="text-xl font-mono font-bold mt-1 text-[var(--text-primary)]">
-                  {displayCurrency} {totalBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  {localCurrency} {totalBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </p>
               </div>
               <div className="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800/30">
@@ -301,7 +296,7 @@ const AccountDetail: React.FC<AccountDetailProps> = ({ accountId: bankId, onBack
                     type="text" 
                     value={bank.bank_name}
                     onChange={e => setBank({...bank, bank_name: e.target.value})}
-                    className="w-full px-4 py-2.5 rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] focus:bg-[var(--bg-primary)] focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-[var(--text-primary)]"
+                    className="w-full px-4 py-2.5 rounded-xl border border-[var(--border-color)] bg-white dark:bg-gray-900 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-[var(--text-primary)]"
                     placeholder="e.g. Bank of America"
                   />
                 </div>
@@ -311,7 +306,7 @@ const AccountDetail: React.FC<AccountDetailProps> = ({ accountId: bankId, onBack
                     type="text" 
                     value={bank.name}
                     onChange={e => setBank({...bank, name: e.target.value})}
-                    className="w-full px-4 py-2.5 rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] focus:bg-[var(--bg-primary)] focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-[var(--text-primary)]"
+                    className="w-full px-4 py-2.5 rounded-xl border border-[var(--border-color)] bg-white dark:bg-gray-900 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-[var(--text-primary)]"
                     placeholder="e.g. BoA"
                   />
                 </div>
@@ -320,7 +315,7 @@ const AccountDetail: React.FC<AccountDetailProps> = ({ accountId: bankId, onBack
                   <select 
                     value={bank.owner_id}
                     onChange={e => setBank({...bank, owner_id: parseInt(e.target.value)})}
-                    className="w-full px-4 py-2.5 rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] focus:bg-[var(--bg-primary)] focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-[var(--text-primary)]"
+                    className="w-full px-4 py-2.5 rounded-xl border border-[var(--border-color)] bg-white dark:bg-gray-900 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-[var(--text-primary)]"
                   >
                     {owners.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
                   </select>
@@ -330,7 +325,7 @@ const AccountDetail: React.FC<AccountDetailProps> = ({ accountId: bankId, onBack
                   <select 
                     value={bank.institution_type || 'Bank'}
                     onChange={e => setBank({...bank, institution_type: e.target.value})}
-                    className="w-full px-4 py-2.5 rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] focus:bg-[var(--bg-primary)] focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-[var(--text-primary)]"
+                    className="w-full px-4 py-2.5 rounded-xl border border-[var(--border-color)] bg-white dark:bg-gray-900 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-[var(--text-primary)]"
                   >
                     <option value="Bank">{t('bank')}</option>
                     <option value="Insurance">{t('insurance')}</option>
@@ -343,7 +338,7 @@ const AccountDetail: React.FC<AccountDetailProps> = ({ accountId: bankId, onBack
                   <select 
                     value={bank.country}
                     onChange={e => setBank({...bank, country: e.target.value})}
-                    className="w-full px-4 py-2.5 rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] focus:bg-[var(--bg-primary)] focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-[var(--text-primary)]"
+                    className="w-full px-4 py-2.5 rounded-xl border border-[var(--border-color)] bg-white dark:bg-gray-900 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-[var(--text-primary)]"
                   >
                     {countries.map(c => <option key={c} value={c}>{c}</option>)}
                   </select>
@@ -502,7 +497,7 @@ const AccountDetail: React.FC<AccountDetailProps> = ({ accountId: bankId, onBack
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.95 }}
-                    className="bg-[var(--bg-primary)] rounded-2xl p-6 shadow-2xl border border-[var(--border-color)] w-full max-w-md"
+                    className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-2xl border border-[var(--border-color)] w-full max-w-md"
                   >
                     <h4 className="text-lg font-bold mb-6 text-[var(--text-primary)]">{editingAccount.id ? t('editAccount') : t('addAccount')}</h4>
                     <div className="space-y-4">
@@ -512,7 +507,7 @@ const AccountDetail: React.FC<AccountDetailProps> = ({ accountId: bankId, onBack
                           type="text" 
                           value={editingAccount.name}
                           onChange={e => setEditingAccount({...editingAccount, name: e.target.value})}
-                          className="w-full px-4 py-2.5 rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] focus:bg-[var(--bg-primary)] focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-[var(--text-primary)]"
+                          className="w-full px-4 py-2.5 rounded-xl border border-[var(--border-color)] bg-white dark:bg-gray-900 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-[var(--text-primary)]"
                           placeholder="e.g. Savings Account"
                         />
                       </div>
@@ -522,7 +517,7 @@ const AccountDetail: React.FC<AccountDetailProps> = ({ accountId: bankId, onBack
                           type="text" 
                           value={editingAccount.account_number}
                           onChange={e => setEditingAccount({...editingAccount, account_number: e.target.value})}
-                          className="w-full px-4 py-2.5 rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] focus:bg-[var(--bg-primary)] focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-[var(--text-primary)]"
+                          className="w-full px-4 py-2.5 rounded-xl border border-[var(--border-color)] bg-white dark:bg-gray-900 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-[var(--text-primary)]"
                           placeholder="**** 1234"
                         />
                       </div>
@@ -531,7 +526,7 @@ const AccountDetail: React.FC<AccountDetailProps> = ({ accountId: bankId, onBack
                         <select 
                           value={editingAccount.type}
                           onChange={e => setEditingAccount({...editingAccount, type: e.target.value})}
-                          className="w-full px-4 py-2.5 rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] focus:bg-[var(--bg-primary)] focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-[var(--text-primary)]"
+                          className="w-full px-4 py-2.5 rounded-xl border border-[var(--border-color)] bg-white dark:bg-gray-900 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-[var(--text-primary)]"
                         >
                           <option value="Bank">{t('bank')}</option>
                           <option value="Credit">{t('credit')}</option>

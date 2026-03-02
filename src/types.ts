@@ -15,6 +15,7 @@ export interface Bank {
   institution_type?: string;
   logo_color?: string;
   country?: string;
+  currency?: string;
   last_updated?: string;
   total_balance?: number;
   accounts?: Account[];

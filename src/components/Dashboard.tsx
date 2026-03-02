@@ -30,7 +30,7 @@ const Dashboard: React.FC = () => {
     : [];
 
   const totalAssets = filteredBanks.reduce((sum, bank) => {
-    return sum + convertToDisplay(bank.total_balance || 0, displayCurrency); 
+    return sum + convertToDisplay(bank.total_balance || 0, bank.currency || displayCurrency); 
   }, 0) + filteredAssets.reduce((sum, asset) => {
     return sum + convertToDisplay(asset.value || 0, asset.currency || 'USD');
   }, 0);
@@ -44,7 +44,7 @@ const Dashboard: React.FC = () => {
     const ownerAssets = filteredAssets.filter(asset => asset.owner_id === owner.id);
     
     const bankTotal = ownerBanks.reduce((sum, bank) => {
-      return sum + convertToDisplay(bank.total_balance || 0, displayCurrency);
+      return sum + convertToDisplay(bank.total_balance || 0, bank.currency || displayCurrency);
     }, 0);
     
     const assetTotal = ownerAssets.reduce((sum, asset) => {

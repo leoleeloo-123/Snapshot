@@ -47,7 +47,7 @@ const AssetDetail: React.FC<AssetDetailProps> = ({ assetId, onBack }) => {
     t, owners, countries, currencies, language,
     getAsset, addAsset, updateAsset, deleteAsset,
     addAssetLog, updateAssetLog, deleteAssetLog,
-    displayCurrency, fxRates
+    displayCurrency, fxRates, getCurrencyByCountry, convertToDisplay
   } = useAppContext();
   
   const [asset, setAsset] = useState<Partial<Asset>>({
@@ -153,14 +153,8 @@ const AssetDetail: React.FC<AssetDetailProps> = ({ assetId, onBack }) => {
     if (updated) setAsset(updated);
   };
 
-  const convertToDisplay = (amount: number, fromCurrency: string) => {
-    if (fromCurrency === displayCurrency) return amount;
-    const usdToFrom = fxRates.find(r => r.base_currency === 'USD' && r.target_currency === fromCurrency)?.rate || 1;
-    const usdToDisplay = fxRates.find(r => r.base_currency === 'USD' && r.target_currency === displayCurrency)?.rate || 1;
-    return (amount / usdToFrom) * usdToDisplay;
-  };
-
-  const displayValue = convertToDisplay(asset.value || 0, asset.currency || 'USD');
+  const localCurrency = getCurrencyByCountry(asset.country);
+  const displayValue = convertToDisplay(asset.value || 0, asset.currency || 'USD', localCurrency);
 
   return (
     <div className="min-h-[100dvh] bg-[var(--bg-primary)]">
@@ -228,7 +222,7 @@ const AssetDetail: React.FC<AssetDetailProps> = ({ assetId, onBack }) => {
               <div className="p-4 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/30">
                 <p className="text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase">{t('currentValue')}</p>
                 <p className="text-xl font-mono font-bold mt-1 text-[var(--text-primary)]">
-                  {displayCurrency} {displayValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  {localCurrency} {displayValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </p>
               </div>
               <div className="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800/30">
@@ -270,7 +264,7 @@ const AssetDetail: React.FC<AssetDetailProps> = ({ assetId, onBack }) => {
                     type="text" 
                     value={asset.name}
                     onChange={e => setAsset({...asset, name: e.target.value})}
-                    className="w-full px-4 py-2.5 rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] focus:bg-[var(--bg-primary)] focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-[var(--text-primary)]"
+                    className="w-full px-4 py-2.5 rounded-xl border border-[var(--border-color)] bg-white dark:bg-gray-900 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-[var(--text-primary)]"
                     placeholder="e.g. Downtown Apartment"
                   />
                 </div>
@@ -279,7 +273,7 @@ const AssetDetail: React.FC<AssetDetailProps> = ({ assetId, onBack }) => {
                   <select 
                     value={asset.owner_id}
                     onChange={e => setAsset({...asset, owner_id: parseInt(e.target.value)})}
-                    className="w-full px-4 py-2.5 rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] focus:bg-[var(--bg-primary)] focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-[var(--text-primary)]"
+                    className="w-full px-4 py-2.5 rounded-xl border border-[var(--border-color)] bg-white dark:bg-gray-900 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-[var(--text-primary)]"
                   >
                     {owners.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
                   </select>
@@ -289,7 +283,7 @@ const AssetDetail: React.FC<AssetDetailProps> = ({ assetId, onBack }) => {
                   <select 
                     value={asset.asset_type || 'Real Estate'}
                     onChange={e => setAsset({...asset, asset_type: e.target.value})}
-                    className="w-full px-4 py-2.5 rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] focus:bg-[var(--bg-primary)] focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-[var(--text-primary)]"
+                    className="w-full px-4 py-2.5 rounded-xl border border-[var(--border-color)] bg-white dark:bg-gray-900 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-[var(--text-primary)]"
                   >
                     <option value="Real Estate">{t('realEstate')}</option>
                     <option value="Vehicle">{t('vehicle')}</option>
@@ -302,7 +296,7 @@ const AssetDetail: React.FC<AssetDetailProps> = ({ assetId, onBack }) => {
                   <select 
                     value={asset.country}
                     onChange={e => setAsset({...asset, country: e.target.value})}
-                    className="w-full px-4 py-2.5 rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] focus:bg-[var(--bg-primary)] focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-[var(--text-primary)]"
+                    className="w-full px-4 py-2.5 rounded-xl border border-[var(--border-color)] bg-white dark:bg-gray-900 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-[var(--text-primary)]"
                   >
                     {countries.map(c => <option key={c} value={c}>{c}</option>)}
                   </select>

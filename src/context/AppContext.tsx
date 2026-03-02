@@ -44,6 +44,8 @@ interface AppContextType {
   t: (key: string) => string;
   resetAllData: () => void;
   importAllData: (data: any) => void;
+  getCurrencyByCountry: (country?: string) => string;
+  convertToDisplay: (amount: number, fromCurrency: string, targetCurrency?: string) => number;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -499,10 +501,29 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setTimeout(() => window.location.reload(), 500);
   };
 
-  const convertToDisplay = (amount: number, fromCurrency: string) => {
-    if (fromCurrency === displayCurrency) return amount;
+  const getCurrencyByCountry = (country?: string) => {
+    if (!country) return displayCurrency;
+    const map: Record<string, string> = {
+      'USA': 'USD',
+      'China': 'CNY',
+      'Hong Kong': 'HKD',
+      'Japan': 'JPY',
+      'UK': 'GBP',
+      'Europe': 'EUR',
+      'Germany': 'EUR',
+      'France': 'EUR',
+      'Canada': 'CAD',
+      'Australia': 'AUD',
+      'Singapore': 'SGD',
+    };
+    return map[country] || displayCurrency;
+  };
+
+  const convertToDisplay = (amount: number, fromCurrency: string, targetCurrency?: string) => {
+    const toCurrency = targetCurrency || displayCurrency;
+    if (fromCurrency === toCurrency) return amount;
     const usdToFrom = fxRates.find(r => r.base_currency === 'USD' && r.target_currency === fromCurrency)?.rate || 1;
-    const usdToDisplay = fxRates.find(r => r.base_currency === 'USD' && r.target_currency === displayCurrency)?.rate || 1;
+    const usdToDisplay = fxRates.find(r => r.base_currency === 'USD' && r.target_currency === toCurrency)?.rate || 1;
     return (amount / usdToFrom) * usdToDisplay;
   };
 
@@ -516,11 +537,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       logs: logs.filter(l => l.account_id === acc.id).sort((a, b) => new Date(b.recorded_at).getTime() - new Date(a.recorded_at).getTime())
     }));
 
-    // Calculate total balance
+    // Calculate total balance in local currency
+    const localCurrency = getCurrencyByCountry(bank.country);
     let total_balance = 0;
     bankAccounts.forEach(acc => {
       if (acc.logs && acc.logs.length > 0) {
-        total_balance += convertToDisplay(acc.logs[0].balance, acc.logs[0].currency);
+        total_balance += convertToDisplay(acc.logs[0].balance, acc.logs[0].currency, localCurrency);
       }
     });
 
@@ -528,7 +550,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       ...bank,
       owner_name: owner?.name,
       accounts: bankAccounts,
-      total_balance
+      total_balance,
+      currency: localCurrency
     };
   };
 
@@ -551,17 +574,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const aggregatedBanks = banks.map(b => {
     const owner = owners.find(o => o.id === b.owner_id);
     const bankAccounts = accounts.filter(a => a.bank_id === b.id);
+    
+    const localCurrency = getCurrencyByCountry(b.country);
     let total_balance = 0;
+    
     bankAccounts.forEach(acc => {
       const accountLogs = logs.filter(l => l.account_id === acc.id).sort((a, b) => new Date(b.recorded_at).getTime() - new Date(a.recorded_at).getTime());
       if (accountLogs.length > 0) {
-        total_balance += convertToDisplay(accountLogs[0].balance, accountLogs[0].currency);
+        total_balance += convertToDisplay(accountLogs[0].balance, accountLogs[0].currency, localCurrency);
       }
     });
     return {
       ...b,
       owner_name: owner?.name,
       total_balance,
+      currency: localCurrency,
       account_count: bankAccounts.length
     };
   });
@@ -595,7 +622,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       fxRates, updateFXRates,
       displayCurrency, setDisplayCurrency,
       selectedOwners, setSelectedOwners,
-      t, resetAllData, importAllData
+      t, resetAllData, importAllData, getCurrencyByCountry, convertToDisplay
     }}>
       {children}
     </AppContext.Provider>
