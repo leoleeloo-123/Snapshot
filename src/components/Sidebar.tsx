@@ -19,7 +19,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeModule, setActiveModule }) => {
 
   const menuItems = [
     { id: 'dashboard', label: t('dashboard'), icon: LayoutDashboard },
-    { id: 'accounts', label: t('accounts'), icon: Users },
+    { id: 'accounts', label: t('assets'), icon: Briefcase },
     { id: 'data', label: t('dataManagement'), icon: Database },
     { id: 'settings', label: t('settings'), icon: Settings },
   ];

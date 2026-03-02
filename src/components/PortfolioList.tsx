@@ -1,7 +1,7 @@
-import React, { useState, useMemo } from 'react';
-import { Plus, Search, ArrowUpRight, Landmark, CreditCard, Shield, TrendingUp, Wallet, Briefcase, Home, Car, Filter, Layers, Globe, User, Tag } from 'lucide-react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
+import { Plus, Search, ArrowUpRight, Landmark, CreditCard, Shield, TrendingUp, Wallet, Briefcase, Home, Car, Filter, Layers, Globe, User, Tag, HandCoins } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
-import { Bank, Asset } from '../types';
+import { Bank, Asset, Loan } from '../types';
 
 const getInstitutionIcon = (type?: string) => {
   switch (type) {
@@ -40,37 +40,53 @@ const getTranslationKey = (type: string) => {
 interface PortfolioListProps {
   onSelectAccount: (id: number | null) => void;
   onSelectAsset: (id: number | null) => void;
+  onSelectLoan: (id: number | null) => void;
 }
 
-const PortfolioList: React.FC<PortfolioListProps> = ({ onSelectAccount, onSelectAsset }) => {
-  const { t, banks, assets, language, displayCurrency, getCurrencyByCountry, convertToDisplay } = useAppContext();
+const PortfolioList: React.FC<PortfolioListProps> = ({ onSelectAccount, onSelectAsset, onSelectLoan }) => {
+  const { t, banks, assets, loans, language, displayCurrency, getCurrencyByCountry, convertToDisplay } = useAppContext();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState('all');
   const [selectedCountry, setSelectedCountry] = useState('all');
   const [selectedUser, setSelectedUser] = useState('all');
   const [selectedTag, setSelectedTag] = useState('all');
+  const [showAddMenu, setShowAddMenu] = useState(false);
+  const addMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (addMenuRef.current && !addMenuRef.current.contains(event.target as Node)) {
+        setShowAddMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Extract unique values for filters
   const uniqueCountries = useMemo(() => {
     const countries = new Set<string>();
     banks.forEach(b => b.country && countries.add(b.country));
     assets.forEach(a => a.country && countries.add(a.country));
+    loans.forEach(l => l.country && countries.add(l.country));
     return Array.from(countries).sort();
-  }, [banks, assets]);
+  }, [banks, assets, loans]);
 
   const uniqueUsers = useMemo(() => {
     const users = new Set<string>();
     banks.forEach(b => b.owner_name && users.add(b.owner_name));
     assets.forEach(a => a.owner_name && users.add(a.owner_name));
+    loans.forEach(l => l.owner_name && users.add(l.owner_name));
     return Array.from(users).sort();
-  }, [banks, assets]);
+  }, [banks, assets, loans]);
 
   const uniqueTags = useMemo(() => {
     const tags = new Set<string>();
     banks.forEach(b => b.institution_type && tags.add(b.institution_type));
     assets.forEach(a => a.asset_type && tags.add(a.asset_type));
+    loans.forEach(l => l.type && tags.add(l.type));
     return Array.from(tags).sort();
-  }, [banks, assets]);
+  }, [banks, assets, loans]);
 
   const filteredBanks = banks.filter(bank => {
     const matchesSearch = bank.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -93,6 +109,16 @@ const PortfolioList: React.FC<PortfolioListProps> = ({ onSelectAccount, onSelect
     return matchesSearch && matchesType && matchesCountry && matchesUser && matchesTag;
   });
 
+  const filteredLoans = loans.filter(loan => {
+    const matchesSearch = loan.name.toLowerCase().includes(searchTerm.toLowerCase()) || loan.counterparty.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesType = selectedType === 'all' || selectedType === 'loan';
+    const matchesCountry = selectedCountry === 'all' || loan.country === selectedCountry;
+    const matchesUser = selectedUser === 'all' || loan.owner_name === selectedUser;
+    const matchesTag = selectedTag === 'all' || loan.type === selectedTag;
+    
+    return matchesSearch && matchesType && matchesCountry && matchesUser && matchesTag;
+  });
+
   return (
     <div className="p-6 md:p-8 space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -100,21 +126,39 @@ const PortfolioList: React.FC<PortfolioListProps> = ({ onSelectAccount, onSelect
           <h2 className="text-4xl font-bold tracking-tight">{t('accountsAndAssets')}</h2>
           <p className="text-[var(--text-secondary)] mt-1">{t('accountsAndAssetsDesc')}</p>
         </div>
-        <div className="flex items-center gap-3 w-full md:w-auto">
+        <div className="relative" ref={addMenuRef}>
           <button 
-            onClick={() => onSelectAccount(null)}
-            className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-medium transition-all shadow-lg shadow-blue-500/20"
+            onClick={() => setShowAddMenu(!showAddMenu)}
+            className="w-12 h-12 flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg shadow-blue-500/30 transition-all hover:scale-105 active:scale-95"
           >
-            <Plus size={20} />
-            {t('addAccount')}
+            <Plus size={24} />
           </button>
-          <button 
-            onClick={() => onSelectAsset(null)}
-            className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl font-medium transition-all shadow-lg shadow-emerald-500/20"
-          >
-            <Plus size={20} />
-            {t('addAsset')}
-          </button>
+          
+          {showAddMenu && (
+            <div className="absolute right-0 mt-2 w-48 bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-xl shadow-xl overflow-hidden z-50">
+              <button 
+                onClick={() => { onSelectAccount(null); setShowAddMenu(false); }}
+                className="w-full flex items-center gap-3 px-4 py-3 hover:bg-[var(--bg-secondary)] transition-colors text-left text-sm font-medium text-[var(--text-primary)]"
+              >
+                <Landmark size={18} className="text-blue-500" />
+                {t('addAccount')}
+              </button>
+              <button 
+                onClick={() => { onSelectAsset(null); setShowAddMenu(false); }}
+                className="w-full flex items-center gap-3 px-4 py-3 hover:bg-[var(--bg-secondary)] transition-colors text-left text-sm font-medium text-[var(--text-primary)]"
+              >
+                <Briefcase size={18} className="text-emerald-500" />
+                {t('addAsset')}
+              </button>
+              <button 
+                onClick={() => { onSelectLoan(null); setShowAddMenu(false); }}
+                className="w-full flex items-center gap-3 px-4 py-3 hover:bg-[var(--bg-secondary)] transition-colors text-left text-sm font-medium text-[var(--text-primary)]"
+              >
+                <HandCoins size={18} className="text-purple-500" />
+                {t('addLoan')}
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -150,6 +194,7 @@ const PortfolioList: React.FC<PortfolioListProps> = ({ onSelectAccount, onSelect
                 <option value="all">{language === 'zh' ? '所有类型' : 'All Types'}</option>
                 <option value="account">{language === 'zh' ? '账户' : 'Accounts'}</option>
                 <option value="asset">{language === 'zh' ? '资产' : 'Assets'}</option>
+                <option value="loan">{language === 'zh' ? '借款' : 'Loans'}</option>
               </select>
             </div>
             {/* Desktop */}
@@ -166,6 +211,7 @@ const PortfolioList: React.FC<PortfolioListProps> = ({ onSelectAccount, onSelect
                 <option value="all">{language === 'zh' ? '所有类型' : 'All Types'}</option>
                 <option value="account">{language === 'zh' ? '账户' : 'Accounts'}</option>
                 <option value="asset">{language === 'zh' ? '资产' : 'Assets'}</option>
+                <option value="loan">{language === 'zh' ? '借款' : 'Loans'}</option>
               </select>
             </div>
           </div>
@@ -397,7 +443,68 @@ const PortfolioList: React.FC<PortfolioListProps> = ({ onSelectAccount, onSelect
           );
         })}
 
-        {filteredBanks.length === 0 && filteredAssets.length === 0 && (
+        {/* Render Loans */}
+        {filteredLoans.map((loan) => {
+          const isLend = loan.type === 'Lend';
+          const localCurrency = loan.currency || getCurrencyByCountry(loan.country);
+          const displayValue = convertToDisplay(loan.remaining_amount || 0, loan.currency || 'USD', localCurrency);
+          const displayAmount = isLend ? -displayValue : displayValue;
+          
+          return (
+            <div 
+              key={`loan-${loan.id}`}
+              onClick={() => onSelectLoan(loan.id)}
+              className="card p-6 rounded-2xl hover:shadow-xl hover:border-purple-500/50 transition-all cursor-pointer group relative overflow-hidden"
+            >
+              <div className="absolute top-4 right-4 flex items-center">
+                <div className="min-w-[32px] h-8 px-2 rounded-full bg-[var(--bg-secondary)] border border-[var(--border-color)] flex items-center justify-center text-xs font-bold text-[var(--text-secondary)]">
+                  {loan.owner_name?.substring(0, 2).toUpperCase()}
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-4">
+                <div 
+                  className="w-14 h-14 rounded-xl flex items-center justify-center text-white shadow-inner shrink-0"
+                  style={{ backgroundColor: loan.logo_color || '#a855f7' }}
+                >
+                  <HandCoins size={28} />
+                </div>
+                <div className="flex-1 min-w-0 pr-16">
+                  <div className="flex flex-col items-start justify-center h-14 gap-2">
+                    <h3 className="text-2xl font-bold truncate leading-none">{loan.name}</h3>
+                    <span className="shrink-0 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-full bg-[var(--bg-secondary)] border border-[var(--border-color)] text-[var(--text-secondary)]">
+                      {t(loan.type === 'Lend' ? 'lend' : 'borrow')}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-6 pt-6 border-t border-[var(--border-color)] flex items-end justify-between">
+                <div>
+                  <p className="text-xs text-[var(--text-secondary)] uppercase font-bold tracking-widest">{t('remainingAmount')}</p>
+                  <p className={`text-2xl font-mono font-bold mt-1 ${isLend ? 'text-red-500' : 'text-emerald-500'}`}>
+                    {localCurrency} {displayAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="text-[10px] text-[var(--text-secondary)] uppercase font-bold">{t('lastUpdate')}</p>
+                  <p className="text-xs font-medium mt-0.5">
+                    {loan.last_updated ? new Date(loan.last_updated).toLocaleDateString() : 'Never'}
+                  </p>
+                </div>
+              </div>
+              
+              <div className="mt-4 pt-4 border-t border-[var(--border-color)] flex items-center justify-between text-sm text-[var(--text-secondary)]">
+                <div className="flex items-center gap-1.5">
+                  <User size={14} />
+                  <span className="truncate max-w-[150px]">{loan.counterparty}</span>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+
+        {filteredBanks.length === 0 && filteredAssets.length === 0 && filteredLoans.length === 0 && (
           <div className="col-span-full py-20 text-center">
             <div className="w-20 h-20 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-full flex items-center justify-center mx-auto mb-4">
               <Landmark size={32} className="text-[var(--text-secondary)] opacity-20" />

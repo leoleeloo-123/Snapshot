@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { Theme, Language, Owner, FXRate, Bank, Account, BalanceLog, Asset, AssetLog } from '../types';
+import { Theme, Language, Owner, FXRate, Bank, Account, BalanceLog, Asset, AssetLog, Loan, LoanLog } from '../types';
 
 interface AppContextType {
   theme: Theme;
@@ -29,6 +29,14 @@ interface AppContextType {
   addAssetLog: (log: Omit<AssetLog, 'id'>) => void;
   updateAssetLog: (id: number, log: Partial<AssetLog>) => void;
   deleteAssetLog: (id: number) => void;
+  loans: Loan[];
+  getLoan: (id: number) => Loan | undefined;
+  addLoan: (loan: Omit<Loan, 'id' | 'logs' | 'log_count' | 'remaining_amount'>) => number;
+  updateLoan: (id: number, loan: Partial<Loan>) => void;
+  deleteLoan: (id: number) => void;
+  addLoanLog: (log: Omit<LoanLog, 'id'>) => void;
+  updateLoanLog: (id: number, log: Partial<LoanLog>) => void;
+  deleteLoanLog: (id: number) => void;
   countries: string[];
   addCountry: (name: string) => void;
   deleteCountry: (name: string) => void;
@@ -55,10 +63,12 @@ const translations = {
     dashboard: 'Dashboard',
     accounts: 'Accounts',
     assets: 'Assets',
+    loans: 'Loans',
     dataManagement: 'Data Management',
     settings: 'Settings',
     addAccount: 'Add Account',
     addAsset: 'Add Asset',
+    addLoan: 'Add Loan',
     owner: 'Owner',
     name: 'Name',
     type: 'Type',
@@ -149,8 +159,8 @@ const translations = {
     maintenance: 'Maintenance',
     assetValue: 'Asset Value',
     dataManagementDesc: 'Bulk import and export tools for database management.',
-    accountsAndAssets: 'Accounts & Assets',
-    accountsAndAssetsDesc: 'Manage and track all your accounts and assets.',
+    accountsAndAssets: 'Accounts, Assets & Loans',
+    accountsAndAssetsDesc: 'Manage and track all your accounts, assets, and loans.',
     reviewDB: 'Review DB',
     uploadExcel: 'Upload Excel',
     exportExcel: 'Export Excel',
@@ -270,8 +280,8 @@ const translations = {
     maintenance: '维护',
     assetValue: '资产价值',
     dataManagementDesc: '用于数据库管理的批量导入和导出工具。',
-    accountsAndAssets: '账户与资产',
-    accountsAndAssetsDesc: '管理和追踪您的所有账户和资产。',
+    accountsAndAssets: '账户、资产与借款',
+    accountsAndAssetsDesc: '管理和追踪您的所有账户、资产和借款。',
     reviewDB: '检查数据库',
     uploadExcel: '上传 Excel',
     exportExcel: '导出 Excel',
@@ -308,6 +318,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [logs, setLogs] = useState<BalanceLog[]>(() => JSON.parse(localStorage.getItem('logs') || '[]'));
   const [assets, setAssets] = useState<Asset[]>(() => JSON.parse(localStorage.getItem('assets') || '[]'));
   const [assetLogs, setAssetLogs] = useState<AssetLog[]>(() => JSON.parse(localStorage.getItem('assetLogs') || '[]'));
+  const [loans, setLoans] = useState<Loan[]>(() => JSON.parse(localStorage.getItem('loans') || '[]'));
+  const [loanLogs, setLoanLogs] = useState<LoanLog[]>(() => JSON.parse(localStorage.getItem('loanLogs') || '[]'));
   const [countries, setCountries] = useState<string[]>(() => JSON.parse(localStorage.getItem('countries') || '[]'));
   const [currencies, setCurrencies] = useState<string[]>(() => JSON.parse(localStorage.getItem('currencies') || '[]'));
   const [fxRates, setFXRates] = useState<FXRate[]>(() => JSON.parse(localStorage.getItem('fxRates') || '[]'));
@@ -323,6 +335,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   useEffect(() => { localStorage.setItem('logs', JSON.stringify(logs)); }, [logs]);
   useEffect(() => { localStorage.setItem('assets', JSON.stringify(assets)); }, [assets]);
   useEffect(() => { localStorage.setItem('assetLogs', JSON.stringify(assetLogs)); }, [assetLogs]);
+  useEffect(() => { localStorage.setItem('loans', JSON.stringify(loans)); }, [loans]);
+  useEffect(() => { localStorage.setItem('loanLogs', JSON.stringify(loanLogs)); }, [loanLogs]);
   useEffect(() => { localStorage.setItem('countries', JSON.stringify(countries)); }, [countries]);
   useEffect(() => { localStorage.setItem('currencies', JSON.stringify(currencies)); }, [currencies]);
   useEffect(() => { localStorage.setItem('fxRates', JSON.stringify(fxRates)); }, [fxRates]);
@@ -495,6 +509,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (data.logs) setLogs(data.logs);
     if (data.assets) setAssets(data.assets);
     if (data.assetLogs) setAssetLogs(data.assetLogs);
+    if (data.loans) setLoans(data.loans);
+    if (data.loanLogs) setLoanLogs(data.loanLogs);
     if (data.countries) setCountries(data.countries);
     if (data.currencies) setCurrencies(data.currencies);
     if (data.fxRates) setFXRates(data.fxRates);
@@ -603,6 +619,54 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
   });
 
+  const aggregatedLoans = loans.map(loan => {
+    const owner = owners.find(o => o.id === loan.owner_id);
+    const loanLogsForLoan = loanLogs.filter(log => log.loan_id === loan.id).sort((a, b) => new Date(b.recorded_at).getTime() - new Date(a.recorded_at).getTime());
+    
+    const totalRepaid = loanLogsForLoan.filter(l => l.type === 'Repay').reduce((sum, l) => sum + l.amount, 0);
+    const totalBorrowed = loanLogsForLoan.filter(l => l.type === 'Borrow').reduce((sum, l) => sum + l.amount, 0);
+    
+    const remaining_amount = loan.amount + totalBorrowed - totalRepaid;
+
+    return {
+      ...loan,
+      owner_name: owner?.name,
+      logs: loanLogsForLoan,
+      log_count: loanLogsForLoan.length,
+      remaining_amount,
+      last_updated: loanLogsForLoan.length > 0 ? loanLogsForLoan[0].recorded_at : loan.date
+    };
+  });
+
+  const getLoan = (id: number) => aggregatedLoans.find(l => l.id === id);
+
+  const addLoan = (loan: Omit<Loan, 'id' | 'logs' | 'log_count' | 'remaining_amount'>) => {
+    const newId = Date.now();
+    setLoans(prev => [...prev, { ...loan, id: newId }]);
+    return newId;
+  };
+
+  const updateLoan = (id: number, loan: Partial<Loan>) => {
+    setLoans(prev => prev.map(l => l.id === id ? { ...l, ...loan } : l));
+  };
+
+  const deleteLoan = (id: number) => {
+    setLoans(prev => prev.filter(l => l.id !== id));
+    setLoanLogs(prev => prev.filter(log => log.loan_id !== id));
+  };
+
+  const addLoanLog = (log: Omit<LoanLog, 'id'>) => {
+    setLoanLogs(prev => [...prev, { ...log, id: Date.now() }]);
+  };
+
+  const updateLoanLog = (id: number, log: Partial<LoanLog>) => {
+    setLoanLogs(prev => prev.map(l => l.id === id ? { ...l, ...log } : l));
+  };
+
+  const deleteLoanLog = (id: number) => {
+    setLoanLogs(prev => prev.filter(log => log.id !== id));
+  };
+
   const t = (key: string) => {
     return translations[language][key as keyof typeof translations['en']] || key;
   };
@@ -617,6 +681,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       addLog, updateLog, deleteLog,
       assets: aggregatedAssets, getAsset, addAsset, updateAsset, deleteAsset,
       addAssetLog, updateAssetLog, deleteAssetLog,
+      loans: aggregatedLoans, getLoan, addLoan, updateLoan, deleteLoan,
+      addLoanLog, updateLoanLog, deleteLoanLog,
       countries, addCountry, deleteCountry,
       currencies, addCurrency, deleteCurrency,
       fxRates, updateFXRates,

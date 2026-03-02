@@ -68,6 +68,35 @@ export interface AssetLog {
   recorded_at: string;
 }
 
+export interface Loan {
+  id: number;
+  owner_id: number;
+  owner_name?: string;
+  name: string;
+  type: 'Lend' | 'Borrow';
+  counterparty: string;
+  amount: number;
+  date: string;
+  currency: string;
+  country?: string;
+  notes?: string;
+  logo_color?: string;
+  last_updated?: string;
+  logs?: LoanLog[];
+  log_count?: number;
+  remaining_amount?: number;
+}
+
+export interface LoanLog {
+  id: number;
+  loan_id: number;
+  type: 'Borrow' | 'Repay';
+  amount: number;
+  currency: string;
+  comment?: string;
+  recorded_at: string;
+}
+
 export interface FXRate {
   base_currency: string;
   target_currency: string;

@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useAppContext } from '../context/AppContext';
-import { Bank, Asset } from '../types';
-import { Wallet, TrendingUp, Users, LineChart as LineChartIcon, Filter, Layers, DollarSign } from 'lucide-react';
+import { Bank, Asset, Loan } from '../types';
+import { Wallet, TrendingUp, Users, LineChart as LineChartIcon, Filter, Layers, DollarSign, HandCoins } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 
 const Dashboard: React.FC = () => {
-  const { t, owners, fxRates, displayCurrency, banks, assets, selectedOwners, language, getBank, getAsset, currencies } = useAppContext();
+  const { t, owners, fxRates, displayCurrency, banks, assets, loans, selectedOwners, language, getBank, getAsset, getLoan, currencies } = useAppContext();
 
-  const [dashboardTypeFilter, setDashboardTypeFilter] = useState<'both' | 'accounts' | 'assets'>('accounts');
+  const [dashboardTypeFilter, setDashboardTypeFilter] = useState<'both' | 'accounts' | 'assets' | 'loans'>('accounts');
   const [dashboardDisplayCurrency, setDashboardDisplayCurrency] = useState(displayCurrency);
   const [dashboardSelectedOwners, setDashboardSelectedOwners] = useState<number[]>(selectedOwners);
   const [chartUserFilter, setChartUserFilter] = useState<number | 'all'>('all');
@@ -29,10 +29,17 @@ const Dashboard: React.FC = () => {
     ? (dashboardSelectedOwners.length > 0 ? assets.filter(a => dashboardSelectedOwners.includes(a.owner_id)) : assets)
     : [];
 
+  const filteredLoans = (dashboardTypeFilter === 'both' || dashboardTypeFilter === 'loans')
+    ? (dashboardSelectedOwners.length > 0 ? loans.filter(l => dashboardSelectedOwners.includes(l.owner_id)) : loans)
+    : [];
+
   const totalAssets = filteredBanks.reduce((sum, bank) => {
     return sum + convertToDisplay(bank.total_balance || 0, bank.currency || displayCurrency); 
   }, 0) + filteredAssets.reduce((sum, asset) => {
     return sum + convertToDisplay(asset.value || 0, asset.currency || 'USD');
+  }, 0) + filteredLoans.reduce((sum, loan) => {
+    const amount = convertToDisplay(loan.remaining_amount || 0, loan.currency || 'USD');
+    return sum + (loan.type === 'Lend' ? -amount : amount);
   }, 0);
 
   const filteredOwners = dashboardSelectedOwners.length > 0
@@ -42,6 +49,7 @@ const Dashboard: React.FC = () => {
   const ownerData = filteredOwners.map(owner => {
     const ownerBanks = filteredBanks.filter(bank => bank.owner_id === owner.id);
     const ownerAssets = filteredAssets.filter(asset => asset.owner_id === owner.id);
+    const ownerLoans = filteredLoans.filter(loan => loan.owner_id === owner.id);
     
     const bankTotal = ownerBanks.reduce((sum, bank) => {
       return sum + convertToDisplay(bank.total_balance || 0, bank.currency || displayCurrency);
@@ -51,10 +59,15 @@ const Dashboard: React.FC = () => {
       return sum + convertToDisplay(asset.value || 0, asset.currency || 'USD');
     }, 0);
 
+    const loanTotal = ownerLoans.reduce((sum, loan) => {
+      const amount = convertToDisplay(loan.remaining_amount || 0, loan.currency || 'USD');
+      return sum + (loan.type === 'Lend' ? -amount : amount);
+    }, 0);
+
     return {
       name: owner.name,
-      value: bankTotal + assetTotal,
-      count: ownerBanks.length + ownerAssets.length
+      value: bankTotal + assetTotal + loanTotal,
+      count: ownerBanks.length + ownerAssets.length + ownerLoans.length
     };
   }).filter(d => d.value > 0);
 
@@ -74,9 +87,12 @@ const Dashboard: React.FC = () => {
       } else if (type === 'asset') {
         const asset = assets.find(a => a.id === id);
         if (asset && asset.owner_id !== chartUserFilter) setChartItemFilter('all');
+      } else if (type === 'loan') {
+        const loan = loans.find(l => l.id === id);
+        if (loan && loan.owner_id !== chartUserFilter) setChartItemFilter('all');
       }
     }
-  }, [chartUserFilter, banks, assets, chartItemFilter]);
+  }, [chartUserFilter, banks, assets, loans, chartItemFilter]);
 
   const availableChartBanks = filteredBanks.filter(b => {
     return chartUserFilter === 'all' || b.owner_id === chartUserFilter;
@@ -84,6 +100,10 @@ const Dashboard: React.FC = () => {
 
   const availableChartAssets = filteredAssets.filter(a => {
     return chartUserFilter === 'all' || a.owner_id === chartUserFilter;
+  });
+
+  const availableChartLoans = filteredLoans.filter(l => {
+    return chartUserFilter === 'all' || l.owner_id === chartUserFilter;
   });
 
   const chartBanks = availableChartBanks.filter(b => {
@@ -94,12 +114,17 @@ const Dashboard: React.FC = () => {
     return chartItemFilter === 'all' || chartItemFilter === `asset_${a.id}`;
   });
 
+  const chartLoans = availableChartLoans.filter(l => {
+    return chartItemFilter === 'all' || chartItemFilter === `loan_${l.id}`;
+  });
+
   const displayChartData = useMemo(() => {
-    const allLogs: { date: string, itemId: string, balance: number, currency: string }[] = [];
+    const allLogs: { date: string, itemId: string, balance: number, currency: string, isLend?: boolean }[] = [];
     
     // Fetch detailed bank data including accounts and logs
     const detailedBanks = chartBanks.map(b => getBank(b.id)).filter(Boolean) as Bank[];
     const detailedAssets = chartAssets.map(a => getAsset(a.id)).filter(Boolean) as Asset[];
+    const detailedLoans = chartLoans.map(l => getLoan(l.id)).filter(Boolean) as Loan[];
 
     detailedBanks.forEach(bank => {
       bank.accounts?.forEach(acc => {
@@ -126,13 +151,40 @@ const Dashboard: React.FC = () => {
       });
     });
 
+    detailedLoans.forEach(loan => {
+      let currentBalance = loan.amount;
+      allLogs.push({
+        date: loan.date.split('T')[0],
+        itemId: `loan_${loan.id}`,
+        balance: currentBalance,
+        currency: loan.currency,
+        isLend: loan.type === 'Lend'
+      });
+      
+      const sortedLogs = [...(loan.logs || [])].sort((a, b) => new Date(a.recorded_at).getTime() - new Date(b.recorded_at).getTime());
+      sortedLogs.forEach(log => {
+        if (log.type === 'Borrow') {
+           currentBalance += log.amount;
+        } else if (log.type === 'Repay') {
+           currentBalance -= log.amount;
+        }
+        allLogs.push({
+          date: log.recorded_at.split('T')[0],
+          itemId: `loan_${loan.id}`,
+          balance: currentBalance,
+          currency: log.currency,
+          isLend: loan.type === 'Lend'
+        });
+      });
+    });
+
     // If no logs at all, return empty array
     if (allLogs.length === 0) return [];
 
     const uniqueDates = Array.from(new Set(allLogs.map(l => l.date))).sort();
     
     // We need to track the latest balance for each item as we iterate through dates
-    const currentItemBalances: Record<string, { balance: number, currency: string }> = {};
+    const currentItemBalances: Record<string, { balance: number, currency: string, isLend?: boolean }> = {};
     
     const chartData = uniqueDates.map(date => {
       // Update current balances with any logs from this date
@@ -165,6 +217,17 @@ const Dashboard: React.FC = () => {
         }
         itemTotals[asset.name] = assetTotal;
         sum += assetTotal;
+      });
+
+      detailedLoans.forEach(loan => {
+        let loanTotal = 0;
+        const loanBal = currentItemBalances[`loan_${loan.id}`];
+        if (loanBal) {
+          const amount = convertToDisplay(loanBal.balance, loanBal.currency);
+          loanTotal += loanBal.isLend ? -amount : amount;
+        }
+        itemTotals[loan.name] = loanTotal;
+        sum += loanTotal;
       });
 
       return {
@@ -214,7 +277,7 @@ const Dashboard: React.FC = () => {
     }
 
     return filtered;
-  }, [chartBanks, chartAssets, chartTimeFilter, dashboardDisplayCurrency, fxRates, language, getBank, getAsset]);
+  }, [chartBanks, chartAssets, chartLoans, chartTimeFilter, dashboardDisplayCurrency, fxRates, language, getBank, getAsset, getLoan]);
 
   return (
     <div className="p-6 md:p-8 space-y-8">
@@ -312,6 +375,7 @@ const Dashboard: React.FC = () => {
                 <option value="both">{language === 'zh' ? '全部' : 'Both'}</option>
                 <option value="accounts">{t('accounts')}</option>
                 <option value="assets">{t('assets')}</option>
+                <option value="loans">{t('loans')}</option>
               </select>
             </div>
             {/* Desktop */}
@@ -328,6 +392,7 @@ const Dashboard: React.FC = () => {
                 <option value="both">{language === 'zh' ? '全部' : 'Both'}</option>
                 <option value="accounts">{t('accounts')}</option>
                 <option value="assets">{t('assets')}</option>
+                <option value="loans">{t('loans')}</option>
               </select>
             </div>
           </div>
@@ -372,7 +437,7 @@ const Dashboard: React.FC = () => {
           </div>
           <div className="mt-8">
             <p className="text-sm font-medium text-[var(--text-secondary)]">{language === 'zh' ? '追踪项目' : 'Tracked Items'}</p>
-            <p className="text-4xl font-mono font-bold mt-1">{filteredBanks.length + filteredAssets.length}</p>
+            <p className="text-4xl font-mono font-bold mt-1">{filteredBanks.length + filteredAssets.length + filteredLoans.length}</p>
           </div>
         </div>
       </div>
@@ -412,6 +477,9 @@ const Dashboard: React.FC = () => {
                   ))}
                   {availableChartAssets.map(a => (
                     <option key={`asset_${a.id}`} value={`asset_${a.id}`}>💎 {a.name}</option>
+                  ))}
+                  {availableChartLoans.map(l => (
+                    <option key={`loan_${l.id}`} value={`loan_${l.id}`}>🤝 {l.name}</option>
                   ))}
                 </select>
               </div>
@@ -497,7 +565,7 @@ const Dashboard: React.FC = () => {
                   <Legend wrapperStyle={{ paddingTop: '20px' }} />
                   
                   {/* Render individual item lines if not too many, or if a specific item is selected */}
-                  {chartItemFilter === 'all' && (chartBanks.length + chartAssets.length) <= 5 && (
+                  {chartItemFilter === 'all' && (chartBanks.length + chartAssets.length + chartLoans.length) <= 5 && (
                     <>
                       {chartBanks.map((bank, idx) => {
                         const colorIdx = (idx + 1) % COLORS.length;
@@ -522,6 +590,22 @@ const Dashboard: React.FC = () => {
                             key={`asset_${asset.id}`}
                             type="monotone" 
                             dataKey={asset.name} 
+                            stroke={COLORS[colorIdx]} 
+                            fillOpacity={1}
+                            fill={`url(#color-${colorIdx})`}
+                            strokeWidth={2}
+                            dot={false}
+                            activeDot={{ r: 4, strokeWidth: 0 }}
+                          />
+                        );
+                      })}
+                      {chartLoans.map((loan, idx) => {
+                        const colorIdx = (chartBanks.length + chartAssets.length + idx + 1) % COLORS.length;
+                        return (
+                          <Area 
+                            key={`loan_${loan.id}`}
+                            type="monotone" 
+                            dataKey={loan.name} 
                             stroke={COLORS[colorIdx]} 
                             fillOpacity={1}
                             fill={`url(#color-${colorIdx})`}
