@@ -13,7 +13,7 @@ const DataManagement: React.FC = () => {
   const { t, owners, banks, assets, countries, currencies, fxRates, resetAllData, importAllData } = useAppContext();
   const [status, setStatus] = useState<{ type: 'success' | 'error' | 'loading', message: string } | null>(null);
   const [viewMode, setViewMode] = useState<'overview' | 'review_db' | 'preview_import'>('overview');
-  const [activeTab, setActiveTab] = useState<'owners' | 'banks' | 'accounts' | 'logs' | 'assets' | 'assetLogs' | 'config' | 'fxRates'>('owners');
+  const [activeTab, setActiveTab] = useState<'owners' | 'banks' | 'accounts' | 'logs' | 'assets' | 'assetLogs' | 'loans' | 'loanLogs' | 'config' | 'fxRates'>('owners');
   const [previewData, setPreviewData] = useState<any>(null);
 
   const handleExport = async () => {
@@ -23,6 +23,8 @@ const DataManagement: React.FC = () => {
       const accounts = JSON.parse(localStorage.getItem('accounts') || '[]');
       const logs = JSON.parse(localStorage.getItem('logs') || '[]');
       const assetLogs = JSON.parse(localStorage.getItem('assetLogs') || '[]');
+      const loans = JSON.parse(localStorage.getItem('loans') || '[]');
+      const loanLogs = JSON.parse(localStorage.getItem('loanLogs') || '[]');
 
       // Format dates for Excel (MM/DD/YYYY)
       const formatExcelDate = (isoString: string) => {
@@ -56,6 +58,17 @@ const DataManagement: React.FC = () => {
         recorded_at: formatExcelDate(log.recorded_at)
       }));
 
+      const formattedLoans = loans.map((loan: any) => ({
+        ...loan,
+        date: formatExcelDate(loan.date),
+        last_updated: formatExcelDate(loan.last_updated)
+      }));
+
+      const formattedLoanLogs = loanLogs.map((log: any) => ({
+        ...log,
+        recorded_at: formatExcelDate(log.recorded_at)
+      }));
+
       const formattedFxRates = fxRates.map((rate: any) => ({
         ...rate,
         updated_at: formatExcelDate(rate.updated_at)
@@ -80,6 +93,12 @@ const DataManagement: React.FC = () => {
 
       // Asset Logs Sheet
       XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(formattedAssetLogs), "AssetLogs");
+
+      // Loans Sheet
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(formattedLoans), "Loans");
+
+      // Loan Logs Sheet
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(formattedLoanLogs), "LoanLogs");
 
       // Config Sheet
       const configRows = [
@@ -122,6 +141,25 @@ const DataManagement: React.FC = () => {
         const importedAssetLogs = XLSX.utils.sheet_to_json(wb.Sheets["AssetLogs"] || wb.Sheets[wb.SheetNames[5]]);
         
         let sheetIndex = 6;
+        
+        let importedLoans: any[] = [];
+        let importedLoanLogs: any[] = [];
+        
+        if (wb.SheetNames.includes("Loans")) {
+          importedLoans = XLSX.utils.sheet_to_json(wb.Sheets["Loans"]);
+          sheetIndex++;
+        } else if (wb.SheetNames.length > sheetIndex && !["ConfigOptions", "FXRates"].includes(wb.SheetNames[sheetIndex])) {
+          importedLoans = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[sheetIndex]]);
+          sheetIndex++;
+        }
+
+        if (wb.SheetNames.includes("LoanLogs")) {
+          importedLoanLogs = XLSX.utils.sheet_to_json(wb.Sheets["LoanLogs"]);
+          sheetIndex++;
+        } else if (wb.SheetNames.length > sheetIndex && !["ConfigOptions", "FXRates"].includes(wb.SheetNames[sheetIndex])) {
+          importedLoanLogs = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[sheetIndex]]);
+          sheetIndex++;
+        }
 
         const config = XLSX.utils.sheet_to_json(wb.Sheets["ConfigOptions"] || wb.Sheets[wb.SheetNames[sheetIndex]]) as any[];
         const importedFxRates = XLSX.utils.sheet_to_json(wb.Sheets["FXRates"] || wb.Sheets[wb.SheetNames[sheetIndex + 1]]) as any[];
@@ -154,6 +192,12 @@ const DataManagement: React.FC = () => {
           purchase_date: a.purchase_date ? parseDate(a.purchase_date) : undefined
         }));
         const processedAssetLogs = importedAssetLogs.map((l: any) => ({ ...l, recorded_at: parseDate(l.recorded_at) }));
+        const processedLoans = importedLoans.map((l: any) => ({ 
+          ...l, 
+          date: parseDate(l.date),
+          last_updated: parseDate(l.last_updated) 
+        }));
+        const processedLoanLogs = importedLoanLogs.map((l: any) => ({ ...l, recorded_at: parseDate(l.recorded_at) }));
         const processedFxRates = importedFxRates.map((r: any) => ({ ...r, updated_at: parseDate(r.updated_at) }));
 
         setPreviewData({
@@ -163,6 +207,8 @@ const DataManagement: React.FC = () => {
           logs: processedLogs || [],
           assets: processedAssets || [],
           assetLogs: processedAssetLogs || [],
+          loans: processedLoans || [],
+          loanLogs: processedLoanLogs || [],
           config: config || [],
           fxRates: processedFxRates || []
         });
@@ -192,6 +238,8 @@ const DataManagement: React.FC = () => {
         logs: previewData.logs,
         assets: previewData.assets,
         assetLogs: previewData.assetLogs,
+        loans: previewData.loans,
+        loanLogs: previewData.loanLogs,
         countries: countries.length > 0 ? countries : undefined,
         currencies: currencies.length > 0 ? currencies : undefined,
         fxRates: previewData.fxRates
@@ -219,6 +267,8 @@ const DataManagement: React.FC = () => {
       logs: JSON.parse(localStorage.getItem('logs') || '[]'),
       assets,
       assetLogs: JSON.parse(localStorage.getItem('assetLogs') || '[]'),
+      loans: JSON.parse(localStorage.getItem('loans') || '[]'),
+      loanLogs: JSON.parse(localStorage.getItem('loanLogs') || '[]'),
       config: [
         ...countries.map((v: string) => ({ type: 'country', value: v })),
         ...currencies.map((v: string) => ({ type: 'currency', value: v }))
@@ -233,6 +283,8 @@ const DataManagement: React.FC = () => {
       case 'logs': return source.logs;
       case 'assets': return source.assets;
       case 'assetLogs': return source.assetLogs;
+      case 'loans': return source.loans;
+      case 'loanLogs': return source.loanLogs;
       case 'config': return source.config;
       case 'fxRates': return source.fxRates;
       default: return [];
@@ -366,6 +418,14 @@ const DataManagement: React.FC = () => {
                 <span className="text-[var(--text-secondary)] font-bold uppercase tracking-wider text-xs">{t('assetLogs')}</span>
                 <span className="font-mono font-bold text-[var(--text-primary)] bg-[var(--bg-primary)] px-2 py-1 rounded border border-[var(--border-color)]">{JSON.parse(localStorage.getItem('assetLogs') || '[]').length}</span>
               </div>
+              <div className="flex justify-between items-center text-sm p-3 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border-color)]">
+                <span className="text-[var(--text-secondary)] font-bold uppercase tracking-wider text-xs">{t('loans')}</span>
+                <span className="font-mono font-bold text-[var(--text-primary)] bg-[var(--bg-primary)] px-2 py-1 rounded border border-[var(--border-color)]">{JSON.parse(localStorage.getItem('loans') || '[]').length}</span>
+              </div>
+              <div className="flex justify-between items-center text-sm p-3 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border-color)]">
+                <span className="text-[var(--text-secondary)] font-bold uppercase tracking-wider text-xs">{t('loanLogs')}</span>
+                <span className="font-mono font-bold text-[var(--text-primary)] bg-[var(--bg-primary)] px-2 py-1 rounded border border-[var(--border-color)]">{JSON.parse(localStorage.getItem('loanLogs') || '[]').length}</span>
+              </div>
             </div>
           </div>
           
@@ -392,6 +452,8 @@ const DataManagement: React.FC = () => {
               { id: 'logs', label: t('balanceLogs'), icon: '📈' },
               { id: 'assets', label: t('assets'), icon: '🏠' },
               { id: 'assetLogs', label: t('assetLogs'), icon: '📝' },
+              { id: 'loans', label: t('loans'), icon: '🤝' },
+              { id: 'loanLogs', label: t('loanLogs'), icon: '📝' },
               { id: 'config', label: t('config'), icon: '⚙️' },
               { id: 'fxRates', label: t('fxRates'), icon: '💱' }
             ].map(tab => (
