@@ -127,7 +127,7 @@ const AssetDetail: React.FC<AssetDetailProps> = ({ assetId, onBack }) => {
       id: null,
       amount: '', 
       type: 'Valuation',
-      currency: 'USD',
+      currency: asset.currency || 'USD',
       comment: '',
       recorded_at: new Date().toISOString().split('T')[0] 
     });
@@ -153,7 +153,7 @@ const AssetDetail: React.FC<AssetDetailProps> = ({ assetId, onBack }) => {
     if (updated) setAsset(updated);
   };
 
-  const localCurrency = getCurrencyByCountry(asset.country);
+  const localCurrency = asset.currency || getCurrencyByCountry(asset.country);
   const displayValue = convertToDisplay(asset.value || 0, asset.currency || 'USD', localCurrency);
 
   return (
@@ -302,6 +302,16 @@ const AssetDetail: React.FC<AssetDetailProps> = ({ assetId, onBack }) => {
                   </select>
                 </div>
                 <div>
+                  <label className="block text-[10px] font-bold text-[var(--text-secondary)] uppercase mb-1.5">{t('currency')}</label>
+                  <select 
+                    value={asset.currency}
+                    onChange={e => setAsset({...asset, currency: e.target.value})}
+                    className="w-full px-4 py-2.5 rounded-xl border border-[var(--border-color)] bg-white dark:bg-gray-900 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-[var(--text-primary)]"
+                  >
+                    {currencies.map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </div>
+                <div>
                   <label className="block text-[10px] font-bold text-[var(--text-secondary)] uppercase mb-1.5">{t('logoColor')}</label>
                   <div className="flex items-center gap-3">
                     <input 
@@ -350,6 +360,12 @@ const AssetDetail: React.FC<AssetDetailProps> = ({ assetId, onBack }) => {
                       {asset.country || 'Not specified'}
                     </p>
                   </div>
+                  <div>
+                    <p className="text-[10px] font-bold text-[var(--text-secondary)] uppercase mb-1">{t('currency')}</p>
+                    <p className="text-sm font-medium text-[var(--text-primary)]">
+                      {asset.currency || 'USD'}
+                    </p>
+                  </div>
                 </div>
               </div>
             )}
@@ -377,7 +393,7 @@ const AssetDetail: React.FC<AssetDetailProps> = ({ assetId, onBack }) => {
                           id: null,
                           amount: '', 
                           type: 'Valuation',
-                          currency: 'USD',
+                          currency: asset.currency || 'USD',
                           comment: '',
                           recorded_at: new Date().toISOString().split('T')[0] 
                         });

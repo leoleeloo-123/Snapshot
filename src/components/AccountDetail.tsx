@@ -149,7 +149,7 @@ const AccountDetail: React.FC<AccountDetailProps> = ({ accountId: bankId, onBack
     setNewLog({ 
       id: null,
       balance: '', 
-      currency: 'USD',
+      currency: bank.currency || getCurrencyByCountry(bank.country) || 'USD',
       comment: '',
       recorded_at: new Date().toISOString().split('T')[0] 
     });
@@ -176,7 +176,7 @@ const AccountDetail: React.FC<AccountDetailProps> = ({ accountId: bankId, onBack
 
   const selectedAccount = bank.accounts?.find(a => a.id === selectedAccountId);
   
-  const localCurrency = getCurrencyByCountry(bank.country);
+  const localCurrency = bank.currency || getCurrencyByCountry(bank.country);
 
   const totalBalance = bank.accounts?.reduce((sum, acc) => {
     const lastLog = acc.logs?.[0];
@@ -344,6 +344,16 @@ const AccountDetail: React.FC<AccountDetailProps> = ({ accountId: bankId, onBack
                   </select>
                 </div>
                 <div>
+                  <label className="block text-[10px] font-bold text-[var(--text-secondary)] uppercase mb-1.5">{t('currency')}</label>
+                  <select 
+                    value={bank.currency || getCurrencyByCountry(bank.country) || 'USD'}
+                    onChange={e => setBank({...bank, currency: e.target.value})}
+                    className="w-full px-4 py-2.5 rounded-xl border border-[var(--border-color)] bg-white dark:bg-gray-900 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-[var(--text-primary)]"
+                  >
+                    {currencies.map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </div>
+                <div>
                   <label className="block text-[10px] font-bold text-[var(--text-secondary)] uppercase mb-1.5">{t('logoColor')}</label>
                   <div className="flex items-center gap-3">
                     <input 
@@ -390,6 +400,12 @@ const AccountDetail: React.FC<AccountDetailProps> = ({ accountId: bankId, onBack
                     <p className="text-[10px] font-bold text-[var(--text-secondary)] uppercase mb-1">{t('country')}</p>
                     <p className="text-sm font-medium text-[var(--text-primary)]">
                       {bank.country || 'Not specified'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold text-[var(--text-secondary)] uppercase mb-1">{t('currency')}</p>
+                    <p className="text-sm font-medium text-[var(--text-primary)]">
+                      {bank.currency || getCurrencyByCountry(bank.country) || 'USD'}
                     </p>
                   </div>
                 </div>
@@ -606,7 +622,7 @@ const AccountDetail: React.FC<AccountDetailProps> = ({ accountId: bankId, onBack
                         setNewLog({ 
                           id: null,
                           balance: '', 
-                          currency: 'USD',
+                          currency: bank.currency || getCurrencyByCountry(bank.country) || 'USD',
                           comment: '',
                           recorded_at: new Date().toISOString().split('T')[0] 
                         });
