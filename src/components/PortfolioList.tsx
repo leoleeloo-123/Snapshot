@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { Plus, Search, ArrowUpRight, Landmark, CreditCard, Shield, TrendingUp, Wallet, Briefcase, Home, Car, Filter, Layers, Globe, User, Tag, HandCoins } from 'lucide-react';
+import { Plus, Search, ArrowUpRight, Landmark, CreditCard, Shield, TrendingUp, Wallet, Briefcase, Home, Car, Filter, Layers, Globe, User, Tag, HandCoins, Eye, EyeOff } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import { Bank, Asset, Loan } from '../types';
 
@@ -50,6 +50,7 @@ const PortfolioList: React.FC<PortfolioListProps> = ({ onSelectAccount, onSelect
   const [selectedCountry, setSelectedCountry] = useState('all');
   const [selectedUser, setSelectedUser] = useState('all');
   const [selectedTag, setSelectedTag] = useState('all');
+  const [showZeroBalance, setShowZeroBalance] = useState(false);
   const [showAddMenu, setShowAddMenu] = useState(false);
   const addMenuRef = useRef<HTMLDivElement>(null);
 
@@ -95,8 +96,9 @@ const PortfolioList: React.FC<PortfolioListProps> = ({ onSelectAccount, onSelect
     const matchesCountry = selectedCountry === 'all' || bank.country === selectedCountry;
     const matchesUser = selectedUser === 'all' || bank.owner_name === selectedUser;
     const matchesTag = selectedTag === 'all' || bank.institution_type === selectedTag;
+    const matchesZero = showZeroBalance || (bank.total_balance !== 0 && bank.total_balance !== undefined);
     
-    return matchesSearch && matchesType && matchesCountry && matchesUser && matchesTag;
+    return matchesSearch && matchesType && matchesCountry && matchesUser && matchesTag && matchesZero;
   });
 
   const filteredAssets = assets.filter(asset => {
@@ -105,8 +107,9 @@ const PortfolioList: React.FC<PortfolioListProps> = ({ onSelectAccount, onSelect
     const matchesCountry = selectedCountry === 'all' || asset.country === selectedCountry;
     const matchesUser = selectedUser === 'all' || asset.owner_name === selectedUser;
     const matchesTag = selectedTag === 'all' || asset.asset_type === selectedTag;
+    const matchesZero = showZeroBalance || (asset.value !== 0 && asset.value !== undefined);
     
-    return matchesSearch && matchesType && matchesCountry && matchesUser && matchesTag;
+    return matchesSearch && matchesType && matchesCountry && matchesUser && matchesTag && matchesZero;
   });
 
   const filteredLoans = loans.filter(loan => {
@@ -115,8 +118,9 @@ const PortfolioList: React.FC<PortfolioListProps> = ({ onSelectAccount, onSelect
     const matchesCountry = selectedCountry === 'all' || loan.country === selectedCountry;
     const matchesUser = selectedUser === 'all' || loan.owner_name === selectedUser;
     const matchesTag = selectedTag === 'all' || loan.type === selectedTag;
+    const matchesZero = showZeroBalance || (loan.remaining_amount !== 0 && loan.remaining_amount !== undefined);
     
-    return matchesSearch && matchesType && matchesCountry && matchesUser && matchesTag;
+    return matchesSearch && matchesType && matchesCountry && matchesUser && matchesTag && matchesZero;
   });
 
   return (
@@ -135,7 +139,7 @@ const PortfolioList: React.FC<PortfolioListProps> = ({ onSelectAccount, onSelect
           </button>
           
           {showAddMenu && (
-            <div className="absolute right-0 mt-2 w-48 bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-xl shadow-xl overflow-hidden z-50">
+            <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-900 border border-[var(--border-color)] rounded-xl shadow-xl overflow-hidden z-50">
               <button 
                 onClick={() => { onSelectAccount(null); setShowAddMenu(false); }}
                 className="w-full flex items-center gap-3 px-4 py-3 hover:bg-[var(--bg-secondary)] transition-colors text-left text-sm font-medium text-[var(--text-primary)]"
@@ -320,6 +324,37 @@ const PortfolioList: React.FC<PortfolioListProps> = ({ onSelectAccount, onSelect
                 {uniqueTags.map(tag => (
                   <option key={tag} value={tag}>{t(getTranslationKey(tag))}</option>
                 ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Zero Balance Filter */}
+          <div className="relative flex items-center flex-1 md:flex-none justify-center">
+            {/* Mobile */}
+            <div className="md:hidden w-10 h-10 rounded-full bg-[var(--bg-secondary)] border border-[var(--border-color)] flex items-center justify-center text-[var(--text-secondary)] relative shadow-sm">
+              {showZeroBalance ? <Eye size={18} /> : <EyeOff size={18} />}
+              <select 
+                value={showZeroBalance ? 'show' : 'hide'}
+                onChange={(e) => setShowZeroBalance(e.target.value === 'show')}
+                className="absolute inset-0 w-full h-full opacity-0 appearance-none cursor-pointer"
+              >
+                <option value="hide">{t('hideZeroBalance')}</option>
+                <option value="show">{t('showZeroBalance')}</option>
+              </select>
+            </div>
+            {/* Desktop */}
+            <div className="hidden md:flex items-center relative bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl shadow-sm">
+              <div className="absolute left-3 pointer-events-none text-[var(--text-secondary)]">
+                {showZeroBalance ? <Eye size={16} /> : <EyeOff size={16} />}
+              </div>
+              <select 
+                value={showZeroBalance ? 'show' : 'hide'}
+                onChange={(e) => setShowZeroBalance(e.target.value === 'show')}
+                className="shrink-0 pl-9 pr-8 py-2 bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 appearance-none rounded-xl"
+                style={{ backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: 'right 0.5rem center', backgroundRepeat: 'no-repeat', backgroundSize: '1.5em 1.5em' }}
+              >
+                <option value="hide">{t('hideZeroBalance')}</option>
+                <option value="show">{t('showZeroBalance')}</option>
               </select>
             </div>
           </div>

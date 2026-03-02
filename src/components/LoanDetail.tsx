@@ -173,7 +173,7 @@ const LoanDetail: React.FC<LoanDetailProps> = ({ loanId, onBack }) => {
               className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-blue-600 bg-[var(--bg-secondary)] border border-blue-100 dark:border-blue-900/30 rounded-xl hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all"
             >
               <Edit2 size={18} />
-              {t('editAsset')}
+              {t('editLoan')}
             </button>
           )}
           {loanId && (
@@ -345,7 +345,7 @@ const LoanDetail: React.FC<LoanDetailProps> = ({ loanId, onBack }) => {
                     onClick={() => setIsEditingLoan(false)}
                     className="px-4 py-2 text-sm font-bold bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400 rounded-xl hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors"
                   >
-                    Done
+                    {t('done')}
                   </button>
                 </div>
               </div>
@@ -359,7 +359,7 @@ const LoanDetail: React.FC<LoanDetailProps> = ({ loanId, onBack }) => {
                     <HandCoins size={24} />
                   </div>
                   <div>
-                    <h4 className="text-xl font-bold text-[var(--text-primary)]">{loan.name || 'Unnamed Loan'}</h4>
+                    <h4 className="text-xl font-bold text-[var(--text-primary)]">{loan.name || t('unnamedLoan')}</h4>
                     <p className="text-sm text-[var(--text-secondary)]">{t(getTranslationKey(loan.type || 'Lend'))}</p>
                   </div>
                 </div>
@@ -368,19 +368,19 @@ const LoanDetail: React.FC<LoanDetailProps> = ({ loanId, onBack }) => {
                   <div>
                     <p className="text-[10px] font-bold text-[var(--text-secondary)] uppercase mb-1">{t('owner')}</p>
                     <p className="text-sm font-medium text-[var(--text-primary)]">
-                      {owners.find(o => o.id === loan.owner_id)?.name || loan.owner_name || 'Unknown'}
+                      {owners.find(o => o.id === loan.owner_id)?.name || loan.owner_name || t('unknown')}
                     </p>
                   </div>
                   <div>
                     <p className="text-[10px] font-bold text-[var(--text-secondary)] uppercase mb-1">{t('counterparty')}</p>
                     <p className="text-sm font-medium text-[var(--text-primary)]">
-                      {loan.counterparty || 'Not specified'}
+                      {loan.counterparty || t('notSpecified')}
                     </p>
                   </div>
                   <div>
                     <p className="text-[10px] font-bold text-[var(--text-secondary)] uppercase mb-1">{t('country')}</p>
                     <p className="text-sm font-medium text-[var(--text-primary)]">
-                      {loan.country || 'Not specified'}
+                      {loan.country || t('notSpecified')}
                     </p>
                   </div>
                   <div>
