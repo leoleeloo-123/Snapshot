@@ -78,6 +78,7 @@ const AssetDetail: React.FC<AssetDetailProps> = ({ assetId, onBack }) => {
       const data = getAsset(assetId);
       if (data) {
         setAsset(data);
+        setNewLog(prev => ({ ...prev, currency: data.currency || 'USD' }));
       }
     }
   }, [assetId, getAsset]);
@@ -156,6 +157,10 @@ const AssetDetail: React.FC<AssetDetailProps> = ({ assetId, onBack }) => {
   const localCurrency = asset.currency || getCurrencyByCountry(asset.country);
   const displayValue = convertToDisplay(asset.value || 0, asset.currency || 'USD', localCurrency);
 
+  const totalDividends = asset.logs?.filter(l => l.type === 'Dividend').reduce((sum, l) => sum + Math.abs(Number(l.amount)), 0) || 0;
+  const totalInvestment = asset.logs?.filter(l => l.type === 'Investment').reduce((sum, l) => sum + Math.abs(Number(l.amount)), 0) || 0;
+  const netProfitLoss = (asset.value || 0) + totalDividends - totalInvestment;
+
   return (
     <div className="min-h-[100dvh] bg-[var(--bg-primary)]">
       <div className="px-8 py-6 flex items-center justify-between">
@@ -233,6 +238,38 @@ const AssetDetail: React.FC<AssetDetailProps> = ({ assetId, onBack }) => {
               </div>
             </div>
           </div>
+
+          {asset.asset_type === 'Equity' && !isEditingAsset && (
+            <div className="card p-6 rounded-2xl shadow-sm">
+              <h3 className="text-xs font-bold uppercase tracking-widest text-[var(--text-secondary)] mb-6 flex items-center gap-2">
+                <TrendingUp size={14} className="text-blue-500" />
+                {t('equitySummary')}
+              </h3>
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-[var(--text-secondary)]">{t('totalInvestment')}</span>
+                  <span className="font-mono font-bold text-red-500">
+                    -{localCurrency} {totalInvestment.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-[var(--text-secondary)]">{t('totalDividends')}</span>
+                  <span className="font-mono font-bold text-emerald-500">
+                    +{localCurrency} {totalDividends.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </span>
+                </div>
+                <div className="pt-4 border-t border-[var(--border-color)] flex justify-between items-center">
+                  <span className="text-sm font-bold text-[var(--text-primary)]">{t('netProfitLoss')}</span>
+                  <span className={cn(
+                    "font-mono font-bold text-lg",
+                    netProfitLoss >= 0 ? "text-emerald-500" : "text-red-500"
+                  )}>
+                    {netProfitLoss >= 0 ? '+' : ''}{localCurrency} {netProfitLoss.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="card p-6 rounded-2xl shadow-sm relative overflow-hidden">
             {!isEditingAsset && (
@@ -323,12 +360,35 @@ const AssetDetail: React.FC<AssetDetailProps> = ({ assetId, onBack }) => {
                     <span className="text-sm font-mono text-[var(--text-secondary)] uppercase">{asset.logo_color}</span>
                   </div>
                 </div>
+                {asset.asset_type === 'Equity' && (
+                  <>
+                    <div>
+                      <label className="block text-[10px] font-bold text-[var(--text-secondary)] uppercase mb-1.5">{t('shares')}</label>
+                      <input 
+                        type="text" 
+                        value={asset.shares || ''}
+                        onChange={e => setAsset({...asset, shares: e.target.value})}
+                        className="w-full px-4 py-2.5 rounded-xl border border-[var(--border-color)] bg-white dark:bg-gray-900 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-[var(--text-primary)]"
+                        placeholder="e.g. 5%"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-[var(--text-secondary)] uppercase mb-1.5">{t('notes')}</label>
+                      <textarea 
+                        value={asset.notes || ''}
+                        onChange={e => setAsset({...asset, notes: e.target.value})}
+                        className="w-full px-4 py-2.5 rounded-xl border border-[var(--border-color)] bg-white dark:bg-gray-900 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-[var(--text-primary)] min-h-[80px]"
+                        placeholder={t('optionalNotes')}
+                      />
+                    </div>
+                  </>
+                )}
                 <div className="pt-2 flex justify-end">
                   <button 
                     onClick={() => setIsEditingAsset(false)}
                     className="px-4 py-2 text-sm font-bold bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400 rounded-xl hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors"
                   >
-                    Done
+                    {t('done')}
                   </button>
                 </div>
               </div>
@@ -366,6 +426,22 @@ const AssetDetail: React.FC<AssetDetailProps> = ({ assetId, onBack }) => {
                       {asset.currency || 'USD'}
                     </p>
                   </div>
+                  {asset.asset_type === 'Equity' && asset.shares && (
+                    <div>
+                      <p className="text-[10px] font-bold text-[var(--text-secondary)] uppercase mb-1">{t('shares')}</p>
+                      <p className="text-sm font-medium text-[var(--text-primary)]">
+                        {asset.shares}
+                      </p>
+                    </div>
+                  )}
+                  {asset.asset_type === 'Equity' && asset.notes && (
+                    <div className="col-span-2">
+                      <p className="text-[10px] font-bold text-[var(--text-secondary)] uppercase mb-1">{t('notes')}</p>
+                      <p className="text-sm font-medium text-[var(--text-primary)] whitespace-pre-wrap">
+                        {asset.notes}
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -422,13 +498,15 @@ const AssetDetail: React.FC<AssetDetailProps> = ({ assetId, onBack }) => {
                       <div>
                         <label className="block text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase mb-1.5">{t('amount')}</label>
                         <div className="relative">
-                          <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-500" size={16} />
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-500 font-bold text-sm">
+                            {newLog.currency}
+                          </span>
                           <input 
                             type="number" 
                             step="0.01"
                             value={newLog.amount}
                             onChange={e => setNewLog({...newLog, amount: e.target.value})}
-                            className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-blue-200 dark:border-blue-800/30 bg-[var(--bg-primary)] focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-[var(--text-primary)]"
+                            className="w-full pl-12 pr-4 py-2.5 rounded-xl border border-blue-200 dark:border-blue-800/30 bg-[var(--bg-primary)] focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-[var(--text-primary)]"
                             placeholder="0.00"
                           />
                         </div>
@@ -443,6 +521,7 @@ const AssetDetail: React.FC<AssetDetailProps> = ({ assetId, onBack }) => {
                           <option value="Valuation">{t('valuation')}</option>
                           <option value="Dividend">{t('dividend')}</option>
                           <option value="Maintenance">{t('maintenance')}</option>
+                          <option value="Investment">{t('investment')}</option>
                         </select>
                       </div>
                       <div>

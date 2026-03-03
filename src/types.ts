@@ -52,6 +52,7 @@ export interface Asset {
   purchase_date?: string;
   country?: string;
   notes?: string;
+  shares?: string;
   logo_color?: string;
   last_updated?: string;
   logs?: AssetLog[];

@@ -65,6 +65,7 @@ const LoanDetail: React.FC<LoanDetailProps> = ({ loanId, onBack }) => {
       const data = getLoan(loanId);
       if (data) {
         setLoan(data);
+        setNewLog(prev => ({ ...prev, currency: data.currency || 'USD' }));
       }
     }
   }, [loanId, getLoan]);
@@ -286,13 +287,15 @@ const LoanDetail: React.FC<LoanDetailProps> = ({ loanId, onBack }) => {
                 <div>
                   <label className="block text-[10px] font-bold text-[var(--text-secondary)] uppercase mb-1.5">{t('loanAmount')}</label>
                   <div className="relative">
-                    <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-secondary)]" size={16} />
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-secondary)] font-bold text-sm">
+                      {loan.currency}
+                    </span>
                     <input 
                       type="number" 
                       step="0.01"
                       value={loan.amount}
                       onChange={e => setLoan({...loan, amount: parseFloat(e.target.value)})}
-                      className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-[var(--border-color)] bg-white dark:bg-gray-900 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-[var(--text-primary)]"
+                      className="w-full pl-12 pr-4 py-2.5 rounded-xl border border-[var(--border-color)] bg-white dark:bg-gray-900 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-[var(--text-primary)]"
                     />
                   </div>
                 </div>
@@ -445,13 +448,15 @@ const LoanDetail: React.FC<LoanDetailProps> = ({ loanId, onBack }) => {
                       <div>
                         <label className="block text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase mb-1.5">{t('amount')}</label>
                         <div className="relative">
-                          <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-500" size={16} />
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-500 font-bold text-sm">
+                            {newLog.currency}
+                          </span>
                           <input 
                             type="number" 
                             step="0.01"
                             value={newLog.amount}
                             onChange={e => setNewLog({...newLog, amount: e.target.value})}
-                            className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-blue-200 dark:border-blue-800/30 bg-[var(--bg-primary)] focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-[var(--text-primary)]"
+                            className="w-full pl-12 pr-4 py-2.5 rounded-xl border border-blue-200 dark:border-blue-800/30 bg-[var(--bg-primary)] focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-[var(--text-primary)]"
                             placeholder="0.00"
                           />
                         </div>
