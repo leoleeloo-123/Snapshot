@@ -61,7 +61,7 @@ const AppContent: React.FC = () => {
         setSelectedAssetId(undefined);
         setSelectedLoanId(undefined);
       }} />
-      <main className="flex-1 overflow-y-auto h-[100dvh] pb-[calc(5rem+var(--sab))] md:pb-[var(--sab)] pt-[var(--sat)] pl-[var(--sal)] pr-[var(--sar)] md:pl-0">
+      <main className="flex-1 overflow-y-auto h-[100dvh] pb-[calc(5rem_+_var(--sab))] md:pb-[var(--sab)] pt-[var(--sat)] pl-[var(--sal)] pr-[var(--sar)] md:pl-0">
         <AnimatePresence mode="wait">
           <motion.div
             key={selectedAccountId !== undefined ? `account-${selectedAccountId}` : selectedAssetId !== undefined ? `asset-${selectedAssetId}` : selectedLoanId !== undefined ? `loan-${selectedLoanId}` : activeModule}

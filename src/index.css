@@ -14,10 +14,10 @@
   --border-color: rgba(255, 255, 255, 0.5);
   --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
   --glass-shadow-hover: 0 12px 40px 0 rgba(31, 38, 135, 0.15);
-  --sat: env(safe-area-inset-top);
-  --sab: env(safe-area-inset-bottom);
-  --sal: env(safe-area-inset-left);
-  --sar: env(safe-area-inset-right);
+  --sat: env(safe-area-inset-top, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+  --sal: env(safe-area-inset-left, 0px);
+  --sar: env(safe-area-inset-right, 0px);
 }
 
 .dark {
@@ -38,6 +38,12 @@
   --border-color: rgba(167, 243, 208, 0.2);
   --glass-shadow: 0 8px 32px 0 rgba(2, 44, 34, 0.4);
   --glass-shadow-hover: 0 12px 40px 0 rgba(2, 44, 34, 0.6);
+}
+
+html, body {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
 }
 
 body {

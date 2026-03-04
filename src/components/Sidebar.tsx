@@ -28,7 +28,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeModule, setActiveModule }) => {
     <div className={cn(
       "border-[var(--border-color)] glass-panel flex transition-all duration-300 z-50",
       "fixed bottom-0 left-0 right-0 flex-row border-t md:relative md:flex-col md:border-r md:border-t-0",
-      "h-[calc(4rem+var(--sab))] md:h-[100dvh]",
+      "h-[calc(4rem_+_var(--sab))] md:h-[100dvh]",
       "pb-[var(--sab)] pl-[var(--sal)] pr-[var(--sar)] md:pr-0 md:pt-[var(--sat)]",
       isCollapsed ? "md:w-20" : "md:w-64"
     )}>
@@ -44,7 +44,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeModule, setActiveModule }) => {
       </div>
       
       {/* Navigation */}
-      <nav className="flex-1 flex flex-row md:flex-col p-2 md:p-4 gap-1 md:gap-2 overflow-x-auto md:overflow-y-auto justify-around md:justify-start items-center md:items-stretch">
+      <nav className="flex-1 flex flex-row md:flex-col py-2 px-6 md:p-4 gap-1 md:gap-2 overflow-x-auto md:overflow-y-auto justify-around md:justify-start items-center md:items-stretch">
         {menuItems.map((item) => {
           const Icon = item.icon;
           const isActive = activeModule === item.id;
