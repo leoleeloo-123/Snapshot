@@ -44,11 +44,10 @@ interface PortfolioListProps {
 }
 
 const PortfolioList: React.FC<PortfolioListProps> = ({ onSelectAccount, onSelectAsset, onSelectLoan }) => {
-  const { t, banks, assets, loans, language, displayCurrency, getCurrencyByCountry, convertToDisplay } = useAppContext();
+  const { t, banks, assets, loans, language, displayCurrency, getCurrencyByCountry, convertToDisplay, selectedOwners } = useAppContext();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState('all');
   const [selectedCountry, setSelectedCountry] = useState('all');
-  const [selectedUser, setSelectedUser] = useState('all');
   const [selectedTag, setSelectedTag] = useState('all');
   const [showZeroBalance, setShowZeroBalance] = useState(false);
   const [showAddMenu, setShowAddMenu] = useState(false);
@@ -73,14 +72,6 @@ const PortfolioList: React.FC<PortfolioListProps> = ({ onSelectAccount, onSelect
     return Array.from(countries).sort();
   }, [banks, assets, loans]);
 
-  const uniqueUsers = useMemo(() => {
-    const users = new Set<string>();
-    banks.forEach(b => b.owner_name && users.add(b.owner_name));
-    assets.forEach(a => a.owner_name && users.add(a.owner_name));
-    loans.forEach(l => l.owner_name && users.add(l.owner_name));
-    return Array.from(users).sort();
-  }, [banks, assets, loans]);
-
   const uniqueTags = useMemo(() => {
     const tags = new Set<string>();
     banks.forEach(b => b.institution_type && tags.add(b.institution_type));
@@ -94,7 +85,7 @@ const PortfolioList: React.FC<PortfolioListProps> = ({ onSelectAccount, onSelect
                           bank.bank_name?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesType = selectedType === 'all' || selectedType === 'account';
     const matchesCountry = selectedCountry === 'all' || bank.country === selectedCountry;
-    const matchesUser = selectedUser === 'all' || bank.owner_name === selectedUser;
+    const matchesUser = selectedOwners.length === 0 || selectedOwners.includes(bank.owner_id);
     const matchesTag = selectedTag === 'all' || bank.institution_type === selectedTag;
     const matchesZero = showZeroBalance || (bank.total_balance !== 0 && bank.total_balance !== undefined);
     
@@ -105,7 +96,7 @@ const PortfolioList: React.FC<PortfolioListProps> = ({ onSelectAccount, onSelect
     const matchesSearch = asset.name.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesType = selectedType === 'all' || selectedType === 'asset';
     const matchesCountry = selectedCountry === 'all' || asset.country === selectedCountry;
-    const matchesUser = selectedUser === 'all' || asset.owner_name === selectedUser;
+    const matchesUser = selectedOwners.length === 0 || selectedOwners.includes(asset.owner_id);
     const matchesTag = selectedTag === 'all' || asset.asset_type === selectedTag;
     const matchesZero = showZeroBalance || (asset.value !== 0 && asset.value !== undefined);
     
@@ -116,7 +107,7 @@ const PortfolioList: React.FC<PortfolioListProps> = ({ onSelectAccount, onSelect
     const matchesSearch = loan.name.toLowerCase().includes(searchTerm.toLowerCase()) || loan.counterparty.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesType = selectedType === 'all' || selectedType === 'loan';
     const matchesCountry = selectedCountry === 'all' || loan.country === selectedCountry;
-    const matchesUser = selectedUser === 'all' || loan.owner_name === selectedUser;
+    const matchesUser = selectedOwners.length === 0 || selectedOwners.includes(loan.owner_id);
     const matchesTag = selectedTag === 'all' || loan.type === selectedTag;
     const matchesZero = showZeroBalance || (loan.remaining_amount !== 0 && loan.remaining_amount !== undefined);
     
@@ -251,42 +242,6 @@ const PortfolioList: React.FC<PortfolioListProps> = ({ onSelectAccount, onSelect
                 <option value="all">{language === 'zh' ? '所有地区' : 'All Regions'}</option>
                 {uniqueCountries.map(country => (
                   <option key={country} value={country}>{country}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-          
-          {/* User Filter */}
-          <div className="relative flex items-center flex-1 md:flex-none justify-center">
-            {/* Mobile */}
-            <div className="md:hidden w-10 h-10 rounded-full bg-[var(--bg-secondary)] border border-[var(--border-color)] flex items-center justify-center text-[var(--text-secondary)] relative shadow-sm">
-              <User size={18} />
-              {selectedUser !== 'all' && <div className="absolute top-0 right-0 w-2.5 h-2.5 bg-blue-500 rounded-full border-2 border-[var(--bg-secondary)]"></div>}
-              <select 
-                value={selectedUser}
-                onChange={(e) => setSelectedUser(e.target.value)}
-                className="absolute inset-0 w-full h-full opacity-0 appearance-none cursor-pointer"
-              >
-                <option value="all">{language === 'zh' ? '所有用户' : 'All Users'}</option>
-                {uniqueUsers.map(user => (
-                  <option key={user} value={user}>{user}</option>
-                ))}
-              </select>
-            </div>
-            {/* Desktop */}
-            <div className="hidden md:flex items-center relative bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl shadow-sm">
-              <div className="absolute left-3 pointer-events-none text-[var(--text-secondary)]">
-                <User size={16} />
-              </div>
-              <select 
-                value={selectedUser}
-                onChange={(e) => setSelectedUser(e.target.value)}
-                className="shrink-0 pl-9 pr-8 py-2 bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 appearance-none rounded-xl"
-                style={{ backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: 'right 0.5rem center', backgroundRepeat: 'no-repeat', backgroundSize: '1.5em 1.5em' }}
-              >
-                <option value="all">{language === 'zh' ? '所有用户' : 'All Users'}</option>
-                {uniqueUsers.map(user => (
-                  <option key={user} value={user}>{user}</option>
                 ))}
               </select>
             </div>

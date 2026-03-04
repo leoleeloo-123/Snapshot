@@ -16,6 +16,18 @@ interface SidebarProps {
 const Sidebar: React.FC<SidebarProps> = ({ activeModule, setActiveModule }) => {
   const { t, displayCurrency, setDisplayCurrency, currencies, owners, selectedOwners, setSelectedOwners } = useAppContext();
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setShowUserMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const menuItems = [
     { id: 'dashboard', label: t('dashboard'), icon: LayoutDashboard },
@@ -32,15 +44,60 @@ const Sidebar: React.FC<SidebarProps> = ({ activeModule, setActiveModule }) => {
       "pb-[var(--sab)] pl-[var(--sal)] pr-[var(--sar)] md:pr-0 md:pt-[var(--sat)]",
       isCollapsed ? "md:w-20" : "md:w-64"
     )}>
-      {/* Header - Hidden on mobile */}
+      {/* User Selector - Replaces Header */}
       <div className={cn(
-        "p-6 border-b border-[var(--border-color)] hidden md:flex items-center justify-between",
-        isCollapsed && "justify-center px-4"
-      )}>
-        <div className="flex items-center gap-2 overflow-hidden">
-          <div className="w-8 h-8 shrink-0 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold">AS</div>
-          {!isCollapsed && <h1 className="text-2xl font-bold tracking-tight whitespace-nowrap">Asset Snapshot</h1>}
-        </div>
+        "p-2 md:p-6 border-r md:border-r-0 md:border-b border-[var(--border-color)] flex items-center justify-center md:justify-start relative",
+        isCollapsed && "md:justify-center md:px-4"
+      )} ref={userMenuRef}>
+        <button 
+          onClick={() => setShowUserMenu(!showUserMenu)}
+          className={cn(
+            "flex items-center gap-3 transition-all duration-200 hover:opacity-80",
+            isCollapsed ? "justify-center" : "w-full"
+          )}
+        >
+          <div className="w-10 h-10 shrink-0 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold shadow-md">
+            {selectedOwners.length === 1 
+              ? (owners.find(o => o.id === selectedOwners[0])?.name || 'U').substring(0, 2).toUpperCase() 
+              : <Users size={20} />}
+          </div>
+          {!isCollapsed && (
+            <div className="hidden md:flex flex-col items-start overflow-hidden flex-1">
+              <span className="text-sm font-bold truncate w-full text-left">
+                {selectedOwners.length === 1 ? owners.find(o => o.id === selectedOwners[0])?.name : t('allUsers')}
+              </span>
+              <span className="text-xs text-[var(--text-secondary)] truncate w-full text-left">
+                {selectedOwners.length === 1 ? 'User' : 'Workspace'}
+              </span>
+            </div>
+          )}
+        </button>
+
+        {showUserMenu && (
+          <div className="absolute bottom-full left-2 mb-2 md:bottom-auto md:top-full md:mt-2 md:left-6 w-48 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl shadow-xl p-2 backdrop-blur-xl z-[100]">
+            <button
+              onClick={() => { setSelectedOwners([]); setShowUserMenu(false); }}
+              className={cn(
+                "w-full text-left px-4 py-2 rounded-lg text-sm transition-colors",
+                selectedOwners.length === 0 ? "bg-blue-600 text-white" : "hover:bg-[var(--bg-primary)] text-[var(--text-primary)]"
+              )}
+            >
+              {t('allUsers')}
+            </button>
+            {owners.map(owner => (
+              <button
+                key={owner.id}
+                onClick={() => { setSelectedOwners([owner.id]); setShowUserMenu(false); }}
+                className={cn(
+                  "w-full text-left px-4 py-2 rounded-lg text-sm transition-colors mt-1",
+                  selectedOwners.length === 1 && selectedOwners[0] === owner.id ? "bg-blue-600 text-white" : "hover:bg-[var(--bg-primary)] text-[var(--text-primary)]"
+                )}
+              >
+                {owner.name}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
       
       {/* Navigation */}

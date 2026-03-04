@@ -7,9 +7,8 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tool
 const Dashboard: React.FC = () => {
   const { t, owners, fxRates, displayCurrency, banks, assets, loans, selectedOwners, language, getBank, getAsset, getLoan, currencies } = useAppContext();
 
-  const [dashboardTypeFilter, setDashboardTypeFilter] = useState<'both' | 'accounts' | 'assets' | 'loans'>('accounts');
+  const [dashboardTypeFilter, setDashboardTypeFilter] = useState<'both' | 'liquid' | 'fixed'>('both');
   const [dashboardDisplayCurrency, setDashboardDisplayCurrency] = useState(displayCurrency);
-  const [dashboardSelectedOwners, setDashboardSelectedOwners] = useState<number[]>(selectedOwners);
   const [chartUserFilter, setChartUserFilter] = useState<number | 'all'>('all');
   const [chartItemFilter, setChartItemFilter] = useState<string | 'all'>('all');
   const [chartTimeFilter, setChartTimeFilter] = useState<'all' | '1m' | '1y' | 'ytd'>('all');
@@ -21,16 +20,16 @@ const Dashboard: React.FC = () => {
     return (amount / usdToFrom) * usdToDisplay;
   };
 
-  const filteredBanks = (dashboardTypeFilter === 'both' || dashboardTypeFilter === 'accounts')
-    ? (dashboardSelectedOwners.length > 0 ? banks.filter(b => dashboardSelectedOwners.includes(b.owner_id)) : banks)
+  const filteredBanks = (dashboardTypeFilter === 'both' || dashboardTypeFilter === 'liquid')
+    ? (selectedOwners.length > 0 ? banks.filter(b => selectedOwners.includes(b.owner_id)) : banks)
     : [];
 
-  const filteredAssets = (dashboardTypeFilter === 'both' || dashboardTypeFilter === 'assets')
-    ? (dashboardSelectedOwners.length > 0 ? assets.filter(a => dashboardSelectedOwners.includes(a.owner_id)) : assets)
+  const filteredAssets = (dashboardTypeFilter === 'both' || dashboardTypeFilter === 'fixed')
+    ? (selectedOwners.length > 0 ? assets.filter(a => selectedOwners.includes(a.owner_id)) : assets)
     : [];
 
-  const filteredLoans = (dashboardTypeFilter === 'both' || dashboardTypeFilter === 'loans')
-    ? (dashboardSelectedOwners.length > 0 ? loans.filter(l => dashboardSelectedOwners.includes(l.owner_id)) : loans)
+  const filteredLoans = (dashboardTypeFilter === 'both' || dashboardTypeFilter === 'liquid')
+    ? (selectedOwners.length > 0 ? loans.filter(l => selectedOwners.includes(l.owner_id)) : loans)
     : [];
 
   const totalAssets = filteredBanks.reduce((sum, bank) => {
@@ -42,8 +41,8 @@ const Dashboard: React.FC = () => {
     return sum + (loan.type === 'Lend' ? amount : -amount);
   }, 0);
 
-  const filteredOwners = dashboardSelectedOwners.length > 0
-    ? owners.filter(o => dashboardSelectedOwners.includes(o.id))
+  const filteredOwners = selectedOwners.length > 0
+    ? owners.filter(o => selectedOwners.includes(o.id))
     : owners;
 
   const ownerData = filteredOwners.map(owner => {
@@ -317,50 +316,6 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
 
-          {/* User Filter */}
-          <div className="relative flex items-center flex-1 md:flex-none justify-center">
-            {/* Mobile */}
-            <div className="md:hidden w-10 h-10 rounded-full bg-[var(--bg-secondary)] border border-[var(--border-color)] flex items-center justify-center text-[var(--text-secondary)] relative shadow-sm">
-              <Users size={18} />
-              {dashboardSelectedOwners.length > 0 && <div className="absolute top-0 right-0 w-2.5 h-2.5 bg-blue-500 rounded-full border-2 border-[var(--bg-secondary)]"></div>}
-              <select 
-                value={dashboardSelectedOwners.length === 1 ? dashboardSelectedOwners[0] : 'all'}
-                onChange={(e) => {
-                  if (e.target.value === 'all') {
-                    setDashboardSelectedOwners([]);
-                  } else {
-                    setDashboardSelectedOwners([Number(e.target.value)]);
-                  }
-                }}
-                className="absolute inset-0 w-full h-full opacity-0 appearance-none cursor-pointer"
-              >
-                <option value="all">{t('allUsers')}</option>
-                {owners.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
-              </select>
-            </div>
-            {/* Desktop */}
-            <div className="hidden md:flex items-center relative bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl shadow-sm">
-              <div className="absolute left-3 pointer-events-none text-[var(--text-secondary)]">
-                <Users size={16} />
-              </div>
-              <select 
-                value={dashboardSelectedOwners.length === 1 ? dashboardSelectedOwners[0] : 'all'}
-                onChange={(e) => {
-                  if (e.target.value === 'all') {
-                    setDashboardSelectedOwners([]);
-                  } else {
-                    setDashboardSelectedOwners([Number(e.target.value)]);
-                  }
-                }}
-                className="shrink-0 pl-9 pr-8 py-2 bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 appearance-none rounded-xl max-w-[150px] truncate"
-                style={{ backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: 'right 0.5rem center', backgroundRepeat: 'no-repeat', backgroundSize: '1.5em 1.5em' }}
-              >
-                <option value="all">{t('allUsers')}</option>
-                {owners.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
-              </select>
-            </div>
-          </div>
-
           {/* Type Filter */}
           <div className="relative flex items-center flex-1 md:flex-none justify-center">
             {/* Mobile */}
@@ -372,10 +327,9 @@ const Dashboard: React.FC = () => {
                 onChange={e => setDashboardTypeFilter(e.target.value as any)}
                 className="absolute inset-0 w-full h-full opacity-0 appearance-none cursor-pointer"
               >
-                <option value="both">{language === 'zh' ? '全部' : 'Both'}</option>
-                <option value="accounts">{t('accounts')}</option>
-                <option value="assets">{t('assets')}</option>
-                <option value="loans">{t('loans')}</option>
+                <option value="both">{language === 'zh' ? '全部' : 'All'}</option>
+                <option value="liquid">{language === 'zh' ? '流动资产' : 'Liquid Assets'}</option>
+                <option value="fixed">{language === 'zh' ? '固定资产' : 'Fixed Assets'}</option>
               </select>
             </div>
             {/* Desktop */}
@@ -389,10 +343,9 @@ const Dashboard: React.FC = () => {
                 className="shrink-0 pl-9 pr-8 py-2 bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 appearance-none rounded-xl"
                 style={{ backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: 'right 0.5rem center', backgroundRepeat: 'no-repeat', backgroundSize: '1.5em 1.5em' }}
               >
-                <option value="both">{language === 'zh' ? '全部' : 'Both'}</option>
-                <option value="accounts">{t('accounts')}</option>
-                <option value="assets">{t('assets')}</option>
-                <option value="loans">{t('loans')}</option>
+                <option value="both">{language === 'zh' ? '全部' : 'All'}</option>
+                <option value="liquid">{language === 'zh' ? '流动资产' : 'Liquid Assets'}</option>
+                <option value="fixed">{language === 'zh' ? '固定资产' : 'Fixed Assets'}</option>
               </select>
             </div>
           </div>
