@@ -139,7 +139,7 @@ const LoanDetail: React.FC<LoanDetailProps> = ({ loanId, onBack }) => {
   const localCurrency = loan.currency || getCurrencyByCountry(loan.country);
   const displayValue = convertToDisplay(loan.remaining_amount || 0, loan.currency || 'USD', localCurrency);
   const isLend = loan.type === 'Lend';
-  const displayAmount = isLend ? -displayValue : displayValue;
+  const displayAmount = isLend ? displayValue : -displayValue;
 
   return (
     <div className="min-h-[100dvh] bg-[var(--bg-primary)]">
@@ -206,7 +206,7 @@ const LoanDetail: React.FC<LoanDetailProps> = ({ loanId, onBack }) => {
             <div className="grid grid-cols-2 gap-4">
               <div className="p-4 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/30">
                 <p className="text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase">{t('remainingAmount')}</p>
-                <p className={`text-xl font-mono font-bold mt-1 ${isLend ? 'text-red-500' : 'text-emerald-500'}`}>
+                <p className={`text-xl font-mono font-bold mt-1 ${isLend ? 'text-emerald-500' : 'text-red-500'}`}>
                   {localCurrency} {displayAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </p>
               </div>
@@ -537,8 +537,11 @@ const LoanDetail: React.FC<LoanDetailProps> = ({ loanId, onBack }) => {
                               <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-6">
                                   <div>
-                                    <p className="text-xl font-mono font-bold text-[var(--text-primary)]">
-                                      {log.currency} {log.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                    <p className={cn(
+                                      "text-xl font-mono font-bold",
+                                      (isLend ? log.type === 'Borrow' : log.type === 'Repay') ? "text-emerald-500" : "text-red-500"
+                                    )}>
+                                      {log.currency} {(isLend ? (log.type === 'Borrow' ? log.amount : -log.amount) : (log.type === 'Repay' ? log.amount : -log.amount)).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                     </p>
                                     <p className="text-xs font-bold mt-1 text-[var(--text-secondary)]">
                                       {t(getTranslationKey(log.type))}

@@ -483,7 +483,7 @@ const PortfolioList: React.FC<PortfolioListProps> = ({ onSelectAccount, onSelect
           const isLend = loan.type === 'Lend';
           const localCurrency = loan.currency || getCurrencyByCountry(loan.country);
           const displayValue = convertToDisplay(loan.remaining_amount || 0, loan.currency || 'USD', localCurrency);
-          const displayAmount = isLend ? -displayValue : displayValue;
+          const displayAmount = isLend ? displayValue : -displayValue;
           
           return (
             <div 
@@ -517,7 +517,7 @@ const PortfolioList: React.FC<PortfolioListProps> = ({ onSelectAccount, onSelect
               <div className="mt-6 pt-6 border-t border-[var(--border-color)] flex items-end justify-between">
                 <div>
                   <p className="text-xs text-[var(--text-secondary)] uppercase font-bold tracking-widest">{t('remainingAmount')}</p>
-                  <p className={`text-2xl font-mono font-bold mt-1 ${isLend ? 'text-red-500' : 'text-emerald-500'}`}>
+                  <p className={`text-2xl font-mono font-bold mt-1 ${isLend ? 'text-emerald-500' : 'text-red-500'}`}>
                     {localCurrency} {displayAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </p>
                 </div>

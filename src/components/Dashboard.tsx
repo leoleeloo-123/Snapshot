@@ -39,7 +39,7 @@ const Dashboard: React.FC = () => {
     return sum + convertToDisplay(asset.value || 0, asset.currency || 'USD');
   }, 0) + filteredLoans.reduce((sum, loan) => {
     const amount = convertToDisplay(loan.remaining_amount || 0, loan.currency || 'USD');
-    return sum + (loan.type === 'Lend' ? -amount : amount);
+    return sum + (loan.type === 'Lend' ? amount : -amount);
   }, 0);
 
   const filteredOwners = dashboardSelectedOwners.length > 0
@@ -61,7 +61,7 @@ const Dashboard: React.FC = () => {
 
     const loanTotal = ownerLoans.reduce((sum, loan) => {
       const amount = convertToDisplay(loan.remaining_amount || 0, loan.currency || 'USD');
-      return sum + (loan.type === 'Lend' ? -amount : amount);
+      return sum + (loan.type === 'Lend' ? amount : -amount);
     }, 0);
 
     return {
@@ -224,7 +224,7 @@ const Dashboard: React.FC = () => {
         const loanBal = currentItemBalances[`loan_${loan.id}`];
         if (loanBal) {
           const amount = convertToDisplay(loanBal.balance, loanBal.currency);
-          loanTotal += loanBal.isLend ? -amount : amount;
+          loanTotal += loanBal.isLend ? amount : -amount;
         }
         itemTotals[loan.name] = loanTotal;
         sum += loanTotal;
